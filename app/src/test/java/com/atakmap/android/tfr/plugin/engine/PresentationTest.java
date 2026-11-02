@@ -156,6 +156,52 @@ public class PresentationTest {
     }
 
     @Test
+    public void sectionsSplitActiveUpcomingTextOnly() throws Exception {
+        // 12:30Z: the Rome VIP (1415Z) and Mayport (1200Z, already on) etc.
+        Snapshot s = snapshot("2026-11-02T12:30");
+        List<Rows.Row> rows = Rows.build(s, new Rows.Filter(false, false), null, F);
+        List<Rows.Section> secs = Rows.sections(rows);
+        assertEquals(Rows.Box.ACTIVE, secs.get(0).box);
+        assertEquals(Rows.Box.UPCOMING, secs.get(1).box);
+        assertEquals(Rows.Box.TEXT_ONLY, secs.get(2).box);
+        assertEquals(3, secs.size()); // no Ended box when ended are hidden
+        int total = 0;
+        for (Rows.Section sec : secs) {
+            total += sec.rows.size();
+            for (Rows.Row r : sec.rows) {
+                if (sec.box == Rows.Box.TEXT_ONLY)
+                    assertFalse(r.id, r.hasOutline);
+                else
+                    assertTrue(r.id, r.hasOutline);
+                if (sec.box == Rows.Box.ACTIVE)
+                    assertTrue(r.id + " " + r.status, r.status.startsWith("ACTIVE"));
+                if (sec.box == Rows.Box.UPCOMING)
+                    assertFalse(r.id + " " + r.status, r.status.startsWith("ACTIVE"));
+            }
+        }
+        assertEquals(rows.size(), total);
+        assertEquals(15, secs.get(2).rows.size());
+        assertTrue(Rows.Box.TEXT_ONLY.collapsedByDefault);
+        assertFalse(Rows.Box.UPCOMING.collapsedByDefault);
+
+        // Upcoming: soonest start first.
+        List<Rows.Row> up = secs.get(1).rows;
+        assertTrue(up.size() > 1);
+        for (int i = 1; i < up.size(); i++)
+            assertTrue(up.get(i - 1).nextMsForTest() <= up.get(i).nextMsForTest());
+        boolean vipUpcoming = false;
+        for (Rows.Row r : up)
+            if (r.id.equals("6/4199"))
+                vipUpcoming = true;
+        assertTrue(vipUpcoming);
+
+        // With "Show ended", an Ended box appears last.
+        List<Rows.Section> withEnded = Rows.sections(Rows.build(
+                snapshot("2026-11-02T19:00"), new Rows.Filter(false, true), null, F));
+        assertEquals(Rows.Box.ENDED, withEnded.get(withEnded.size() - 1).box);
+    }
+
+    @Test
     public void detailTextIncludesNotamAndAreas() throws Exception {
         Snapshot s = snapshot("2026-11-02T13:00");
         String d = Rows.detail(s.find("6/4313"), s.nowMs, F);

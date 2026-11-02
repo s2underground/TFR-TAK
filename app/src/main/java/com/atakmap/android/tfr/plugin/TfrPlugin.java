@@ -26,6 +26,7 @@ import com.atakmap.android.tfr.plugin.engine.TfrEngine;
 import com.atakmap.android.tfr.plugin.net.HttpFaaClient;
 import com.atakmap.android.tfr.plugin.ui.Format;
 import com.atakmap.android.tfr.plugin.ui.MapPlan;
+import com.atakmap.android.tfr.plugin.ui.Rows;
 import com.atakmap.android.tfr.plugin.ui.TfrPane;
 import com.atakmap.android.util.ATAKUtilities;
 import com.atakmap.android.util.NotificationUtil;
@@ -57,6 +58,8 @@ public final class TfrPlugin implements IPlugin {
     private static final String TAG = "TfrPlugin";
     static final String PREF_SECURITY_ONLY = "tfrtak.securityOnly";
     static final String PREF_SHOW_ENDED = "tfrtak.showEnded";
+    static final String PREF_MAP_VISIBLE = "tfrtak.mapVisible";
+    static final String PREF_COLLAPSED = "tfrtak.collapsed.";
     static final String PREF_ALERT_NM = "tfrtak.alertNm";
     static final int DEFAULT_ALERT_NM = 50;
     private static final int NOTIFY_BASE = 0x7F70;
@@ -74,7 +77,7 @@ public final class TfrPlugin implements IPlugin {
     private MapEventDispatcher.MapEventDispatchListener clickListener;
     private final Handler main = new Handler(Looper.getMainLooper());
     private Snapshot latest;
-    private boolean securityOnly, showEnded;
+    private boolean securityOnly, showEnded, mapVisible;
 
     public TfrPlugin(IServiceController serviceController) {
         final PluginContextProvider ctxProvider = serviceController
@@ -108,6 +111,7 @@ public final class TfrPlugin implements IPlugin {
         prefs = AtakPreferences.getInstance(mapView.getContext()).getSharedPrefs();
         securityOnly = prefs.getBoolean(PREF_SECURITY_ONLY, false);
         showEnded = prefs.getBoolean(PREF_SHOW_ENDED, false);
+        mapVisible = prefs.getBoolean(PREF_MAP_VISIBLE, true);
         if (uiService != null)
             uiService.addToolbarItem(toolbarItem);
 
@@ -182,15 +186,25 @@ public final class TfrPlugin implements IPlugin {
         if (layer == null)
             return; // stopped
         latest = s;
-        try {
-            layer.apply(MapPlan.build(s, securityOnly));
-        } catch (RuntimeException e) {
-            Log.e(TAG, "map update failed", e);
-        }
+        redraw();
         if (controller != null)
             controller.update(s);
         if (!s.newIds.isEmpty())
             alertNew(s);
+    }
+
+    /** Draw the latest snapshot, or nothing when TFRs are switched off. */
+    private void redraw() {
+        if (layer == null)
+            return;
+        try {
+            if (mapVisible && latest != null)
+                layer.apply(MapPlan.build(latest, securityOnly));
+            else
+                layer.apply(new ArrayList<MapPlan.Shape>());
+        } catch (RuntimeException e) {
+            Log.e(TAG, "map update failed", e);
+        }
     }
 
     // ---- alerts -------------------------------------------------------
@@ -270,8 +284,26 @@ public final class TfrPlugin implements IPlugin {
                 public void setSecurityOnly(boolean on) {
                     securityOnly = on;
                     prefs.edit().putBoolean(PREF_SECURITY_ONLY, on).apply();
-                    if (latest != null && layer != null)
-                        layer.apply(MapPlan.build(latest, securityOnly));
+                    redraw();
+                }
+
+                @Override
+                public void setMapVisible(boolean on) {
+                    mapVisible = on;
+                    prefs.edit().putBoolean(PREF_MAP_VISIBLE, on).apply();
+                    redraw();
+                }
+
+                @Override
+                public boolean isCollapsed(Rows.Box box) {
+                    return prefs.getBoolean(PREF_COLLAPSED + box.name(),
+                            box.collapsedByDefault);
+                }
+
+                @Override
+                public void setCollapsed(Rows.Box box, boolean collapsed) {
+                    prefs.edit().putBoolean(PREF_COLLAPSED + box.name(),
+                            collapsed).apply();
                 }
 
                 @Override
@@ -289,7 +321,7 @@ public final class TfrPlugin implements IPlugin {
                 public LatLon self() {
                     return TfrPlugin.this.self();
                 }
-            }, securityOnly, showEnded);
+            }, mapVisible, securityOnly, showEnded);
             pane = new PaneBuilder(controller.getView())
                     .setMetaValue(Pane.RELATIVE_LOCATION, Pane.Location.Default)
                     .setMetaValue(Pane.PREFERRED_WIDTH_RATIO, 0.45D)

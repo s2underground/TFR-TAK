@@ -33,6 +33,13 @@ public final class TfrPane {
 
         void setShowEnded(boolean on);
 
+        /** Show or remove every TFR shape on the map. */
+        void setMapVisible(boolean on);
+
+        boolean isCollapsed(Rows.Box box);
+
+        void setCollapsed(Rows.Box box, boolean collapsed);
+
         /** Zoom the map to a TFR; false if it has nothing drawn. */
         boolean goTo(String id);
 
@@ -47,6 +54,7 @@ public final class TfrPane {
     private static final int AMBER = 0xFFFFC107;
     private static final int GREEN = 0xFF69F0AE;
     private static final int BTN = 0xFF3C3C3C;
+    private static final int HEAD = 0xFF37474F;
 
     private final Context ctx;
     private final Actions actions;
@@ -54,15 +62,15 @@ public final class TfrPane {
     private final LinearLayout listPage, detailPage;
     private final TextView status, warning, counts, detailText;
     private final LinearLayout rowsBox;
-    private final CheckBox securityOnly, showEnded;
+    private final CheckBox mapVisible, securityOnly, showEnded;
     private final Button goToBtn;
 
     private Snapshot snap;
     private String detailId;
     private String lastRowsSig = null;
 
-    public TfrPane(Context pluginContext, Actions actions, boolean secOnly,
-            boolean ended) {
+    public TfrPane(Context pluginContext, Actions actions, boolean onMap,
+            boolean secOnly, boolean ended) {
         this.ctx = pluginContext;
         this.actions = actions;
         root = new ScrollView(ctx);
@@ -80,6 +88,16 @@ public final class TfrPane {
         warning.setVisibility(View.GONE);
         listPage.addView(status);
         listPage.addView(warning);
+
+        mapVisible = check("Show TFRs on map", onMap);
+        mapVisible.setTypeface(Typeface.DEFAULT_BOLD);
+        mapVisible.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton b, boolean on) {
+                TfrPane.this.actions.setMapVisible(on);
+            }
+        });
+        listPage.addView(mapVisible);
 
         LinearLayout bar = new LinearLayout(ctx);
         bar.setOrientation(LinearLayout.HORIZONTAL);
@@ -219,22 +237,62 @@ public final class TfrPane {
                 + drawn + " with a map graphic · " + textOnly
                 + " text-only · showing " + rows.size());
 
-        // Rebuild rows only when their text changed (it changes each minute).
+        List<Rows.Section> sections = Rows.sections(rows);
+        // Rebuild only when the text or a box's open state changed (the
+        // text changes each minute).
         StringBuilder sig = new StringBuilder();
-        for (Rows.Row r : rows)
-            sig.append(r.id).append(r.status).append(r.distance)
-                    .append(r.notes.size()).append('|');
+        for (Rows.Section sec : sections) {
+            sig.append(sec.box).append(actions.isCollapsed(sec.box)).append(':');
+            for (Rows.Row r : sec.rows)
+                sig.append(r.id).append(r.status).append(r.distance)
+                        .append(r.notes.size()).append('|');
+        }
         if (sig.toString().equals(lastRowsSig))
             return;
         lastRowsSig = sig.toString();
         rowsBox.removeAllViews();
-        if (rows.isEmpty()) {
-            rowsBox.addView(text(s.items.isEmpty() && s.lastListOkMs > 0
-                    ? "The FAA lists no TFRs."
-                    : "Nothing to show with these filters.", 14, DIM, false));
+        if (s.items.isEmpty() && s.lastListOkMs > 0) {
+            rowsBox.addView(text("The FAA lists no TFRs.", 14, DIM, false));
+            return;
         }
-        for (final Rows.Row r : rows)
-            rowsBox.addView(rowView(r));
+        for (Rows.Section sec : sections)
+            rowsBox.addView(sectionView(sec));
+    }
+
+    private View sectionView(final Rows.Section sec) {
+        LinearLayout box = vbox();
+        LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        bl.setMargins(0, dp(4), 0, dp(8));
+        box.setLayoutParams(bl);
+        final boolean collapsed = actions.isCollapsed(sec.box);
+        TextView head = text((collapsed ? "\u25B6  " : "\u25BC  ")
+                + sec.box.title + " (" + sec.rows.size() + ")", 15, TEXT, true);
+        head.setBackgroundColor(HEAD);
+        int p = dp(8);
+        head.setPadding(p, p, p, p);
+        head.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                actions.setCollapsed(sec.box, !collapsed);
+                lastRowsSig = null;
+                render();
+            }
+        });
+        box.addView(head);
+        if (collapsed)
+            return box;
+        if (sec.rows.isEmpty()) {
+            TextView none = text(sec.box == Rows.Box.ACTIVE
+                    ? "No TFR with a map graphic is active now."
+                    : "None published.", 13, DIM, false);
+            none.setPadding(dp(8), dp(6), 0, dp(2));
+            box.addView(none);
+        }
+        for (Rows.Row r : sec.rows)
+            box.addView(rowView(r));
+        return box;
     }
 
     private View rowView(final Rows.Row r) {

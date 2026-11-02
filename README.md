@@ -22,8 +22,9 @@ effect near them; pilots should keep using their aviation apps.
 - Solid outline = in effect now; dashed = published but not active yet,
   or between scheduled windows; dotted = dropped from the FAA list
   (possibly cancelled)
-- Pane: data age and any feed problem at the top; list sorted active
-  first, then by distance from you; "Security & VIP only" filter; full
+- Pane: data age and any feed problem at the top; "Show TFRs on map"
+  switch; boxes for Active now (nearest first), Upcoming (soonest start
+  first) and Text-only (collapsed); "Security & VIP only" filter; full
   NOTAM text, every area's altitudes and schedule, and "Show on map"
 - Tap a TFR on the map to open its details
 - Notification when a newly posted TFR is within 50 NM of you
@@ -63,6 +64,10 @@ See docs/DESIGN.md for details and the FAA file format notes.
 _________________________________________________________________
 STATUS
 
+0.2 (Nov 2026): "Show TFRs on map" switch (removes every TFR shape;
+the list, updates and nearby alerts keep running); the pane is split into
+boxes: Active now, Upcoming (soonest first), Text-only (collapsed) and
+Ended (with "Show ended", collapsed); box open/closed states remembered.
 0.1 (Nov 2026): first test build.
 
 _________________________________________________________________

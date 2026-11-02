@@ -54,11 +54,13 @@ public final class Rows {
         public final List<String> notes;
         final int rank;
         final double distanceM;
+        /** Next state change (start of upcoming TFRs); -1 if none. */
+        final long nextMs;
 
         Row(String id, Category category, String title, String subtitle,
                 String status, int statusColor, String distance,
                 boolean hasOutline, List<String> notes, int rank,
-                double distanceM) {
+                double distanceM, long nextMs) {
             this.id = id;
             this.category = category;
             this.title = title;
@@ -70,6 +72,12 @@ public final class Rows {
             this.notes = Collections.unmodifiableList(notes);
             this.rank = rank;
             this.distanceM = distanceM;
+            this.nextMs = nextMs;
+        }
+
+        /** For tests. */
+        public long nextMsForTest() {
+            return nextMs;
         }
     }
 
@@ -149,6 +157,7 @@ public final class Rows {
         int color;
         int rank;
         double dist = Double.NaN;
+        long next = -1;
         boolean outline = false;
         String sub;
         if (t == null) {
@@ -158,7 +167,7 @@ public final class Rows {
             sub = "FDC " + it.id() + " · " + it.entry.description;
         } else {
             Schedule.State st = t.stateAt(now);
-            long next = t.nextChange(now);
+            next = t.nextChange(now);
             switch (st) {
                 case ACTIVE:
                     status = next < 0 ? "ACTIVE (no published end)"
@@ -205,7 +214,75 @@ public final class Rows {
             notes.add(t == null ? it.detailError
                     : it.detailError + " Showing the last copy received.");
         return new Row(it.id(), cat, title, sub, status, color,
-                Format.distance(dist), outline, notes, rank, dist);
+                Format.distance(dist), outline, notes, rank, dist, next);
+    }
+
+    /** The boxes of the pane, in display order. */
+    public enum Box {
+        ACTIVE("Active now", false),
+        UPCOMING("Upcoming", false),
+        TEXT_ONLY("Text-only (no map graphic)", true),
+        ENDED("Ended", true);
+
+        public final String title;
+        /** Collapsed until the user opens it. */
+        public final boolean collapsedByDefault;
+
+        Box(String title, boolean collapsedByDefault) {
+            this.title = title;
+            this.collapsedByDefault = collapsedByDefault;
+        }
+    }
+
+    public static final class Section {
+        public final Box box;
+        public final List<Row> rows;
+
+        Section(Box box, List<Row> rows) {
+            this.box = box;
+            this.rows = Collections.unmodifiableList(rows);
+        }
+    }
+
+    /** Which box a row belongs in. */
+    static Box boxOf(Row r) {
+        if (r.rank == 3)
+            return Box.ENDED;
+        // TFRs with no graphic (mostly long-standing nationwide notices)
+        // go in their own box whatever their state.
+        if (!r.hasOutline && r.rank != 2)
+            return Box.TEXT_ONLY;
+        if (r.rank == 1)
+            return Box.UPCOMING;
+        // Active, and TFRs whose details aren't loaded yet (assume active).
+        return Box.ACTIVE;
+    }
+
+    /**
+     * Rows grouped into boxes. Active: nearest first. Upcoming: soonest
+     * start first. Text-only and ended: security first, then by NOTAM.
+     * Empty boxes are left out, except Active and Upcoming.
+     */
+    public static List<Section> sections(List<Row> rows) {
+        List<Section> out = new ArrayList<>();
+        for (Box b : Box.values()) {
+            List<Row> in = new ArrayList<>();
+            for (Row r : rows)
+                if (boxOf(r) == b)
+                    in.add(r);
+            if (b == Box.UPCOMING)
+                Collections.sort(in, new Comparator<Row>() {
+                    @Override
+                    public int compare(Row a, Row c) {
+                        long x = a.nextMs < 0 ? Long.MAX_VALUE : a.nextMs;
+                        long y = c.nextMs < 0 ? Long.MAX_VALUE : c.nextMs;
+                        return x != y ? Long.compare(x, y) : a.id.compareTo(c.id);
+                    }
+                });
+            if (!in.isEmpty() || b == Box.ACTIVE || b == Box.UPCOMING)
+                out.add(new Section(b, in));
+        }
+        return out;
     }
 
     /** "SFC–4,999 ft AGL", or "SFC–2,500 ft MSL (+3 areas)" */
