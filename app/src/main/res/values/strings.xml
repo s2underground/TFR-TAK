@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TFR-TAK</string>
+    <string name="app_desc">FAA Temporary Flight Restrictions on the map, pulled directly from tfr.faa.gov. For awareness, not for navigation.</string>
+</resources>
