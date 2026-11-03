@@ -15,7 +15,8 @@
 - `ui/` `Rows` and `MapPlan`: pure Java, snapshot to pane rows / map
   shapes (tested). `TfrPane` only renders.
 - `atak/` `MapLayer`: applies a `MapPlan` as ATAK `Polyline`s in group
-  "TFRs (TFR-TAK)"; only changed shapes are touched.
+  "TFR-TAK", registered with Overlay Manager (`DefaultMapGroupOverlay`,
+  base64:// icon); only changed shapes are touched.
 
 ## FAA data format (learned from the 54 TFRs active Nov 2, 2026)
 
@@ -91,6 +92,7 @@ others re-read hourly (≤15 per poll), 250 ms apart.
 
 `Polyline` per area, uid `tfrtak-<n>_<nnnn>-<area#>`; closed, filled,
 stroke 3; height = ceiling in feet (MSL and FL taken as height above
-ground: only ever overstates the drawn height); `centerPointLabel` text;
+ground: only ever overstates the drawn height); `centerPointLabel` text, shown once the area is ~150 px across
+(`maxLabelRenderResolution` = extent / 150, ATAK's default 10 m/px hides it);
 `ignoreMenu` (tap opens our detail view); `archive=false`,
 `nevercot=true` (never saved by ATAK or sent to others).

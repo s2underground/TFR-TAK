@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.atak.plugins.impl.PluginContextProvider;
+import com.atakmap.android.maps.Base64MapDataRef;
 import com.atakmap.android.maps.MapEvent;
 import com.atakmap.android.maps.MapEventDispatcher;
 import com.atakmap.android.maps.MapItem;
@@ -115,7 +116,7 @@ public final class TfrPlugin implements IPlugin {
         if (uiService != null)
             uiService.addToolbarItem(toolbarItem);
 
-        layer = new MapLayer(mapView);
+        layer = new MapLayer(mapView, iconUri());
 
         clickListener = new MapEventDispatcher.MapEventDispatchListener() {
             @Override
@@ -144,6 +145,29 @@ public final class TfrPlugin implements IPlugin {
             }
         });
         engine.start();
+    }
+
+    /**
+     * The plugin icon as a base64:// URI (URL-safe, no wrap: the flags ATAK
+     * decodes with). android.resource:// URIs would be resolved with ATAK's
+     * own context and load nothing (lesson from Blast).
+     */
+    private String iconUri() {
+        try {
+            android.graphics.Bitmap bmp = android.graphics.BitmapFactory
+                    .decodeResource(pluginContext.getResources(),
+                            R.drawable.ic_launcher);
+            if (bmp == null)
+                return null;
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out);
+            return Base64MapDataRef.toUri(android.util.Base64.encodeToString(
+                    out.toByteArray(),
+                    android.util.Base64.URL_SAFE | android.util.Base64.NO_WRAP));
+        } catch (RuntimeException e) {
+            Log.e(TAG, "icon not loaded", e);
+            return null;
+        }
     }
 
     private String version() {

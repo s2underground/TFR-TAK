@@ -64,6 +64,9 @@ See docs/DESIGN.md for details and the FAA file format notes.
 _________________________________________________________________
 STATUS
 
+0.4 (Nov 2026): labels now show at normal zoom (ATAK hides polyline
+labels above 10 m/pixel by default; now scaled to each TFR's size);
+"TFR-TAK" listed in Overlay Manager.
 0.3 (Nov 2026): pre-release audit (docs/AUDIT.md). Multi-area TFRs
 show the right end time; an unreadable schedule part can no longer make a
 TFR look ended; an empty FAA list can never wipe the map; alerts survive

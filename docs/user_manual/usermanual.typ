@@ -4,7 +4,7 @@
 
 #show: userguide.with(
    plugin-name: "TFR-TAK",
-   plugin-version: "0.3",
+   plugin-version: "0.4",
    platform: "ATAK",
    platform-version: "5.6.0",
 )
@@ -23,6 +23,7 @@ TFR-TAK puts the FAA's *Temporary Flight Restrictions* (TFRs) on the ATAK map by
 - The device needs internet the first time. TFR-TAK loads every active TFR (usually 50 to 60 nationwide) within about a minute, then checks for changes every 10 minutes.
 - Tap the *TFR-TAK* toolbar button to open the pane. *Refresh* checks right away.
 - *Show TFRs on map* removes every TFR shape from the map, for screenshots or when TFRs don't matter. The list, the updates and the nearby alerts keep running.
+- TFR-TAK also appears in ATAK's *Overlay Manager*, where the TFRs can be hidden like any other layer and each TFR area is listed.
 - *Security & VIP only* hides every other kind of TFR, on the map and in the list.
 - Tap a TFR on the map, or a row in the list, for its details and the full NOTAM text. *Map* / *Show on map* zooms to it.
 ]
@@ -33,6 +34,7 @@ TFR-TAK puts the FAA's *Temporary Flight Restrictions* (TFRs) on the ATAK map by
 - *Solid outline, stronger fill:* in effect now.
 - *Dashed outline, faint fill:* published but not in effect yet, or between its scheduled windows (some TFRs are active only part of each day, or on certain days).
 - *Dotted:* no longer in the FAA list, possibly cancelled. It is removed if it is still missing at the next update.
+- Labels (type, altitudes, state) appear once you zoom in far enough for the area to fill part of the screen.
 - In 3D view each area is raised from the ground to its ceiling. Ceilings in feet MSL and flight levels are drawn as height above ground, so the drawn top is never lower than the real one. Floors above the surface are not drawn; the label and details give them.
 - A TFR disappears from the map at its published end time, even without a connection.
 ]

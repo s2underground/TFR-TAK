@@ -1,6 +1,7 @@
 package com.atakmap.android.tfr.plugin.ui;
 
 import com.atakmap.android.tfr.plugin.core.Altitude;
+import com.atakmap.android.tfr.plugin.core.Boundary;
 import com.atakmap.android.tfr.plugin.core.Geo;
 import com.atakmap.android.tfr.plugin.core.LatLon;
 import com.atakmap.android.tfr.plugin.core.NotamId;
@@ -24,6 +25,8 @@ import java.util.List;
 public final class MapPlan {
 
     public static final String UID_PREFIX = "tfrtak-";
+    /** Labels appear once an area spans about this many pixels. */
+    public static final double LABEL_MIN_PIXELS = 150.0;
 
     public enum Line {
         SOLID, DASHED, DOTTED
@@ -40,6 +43,13 @@ public final class MapPlan {
         public final double heightM;
         public final String label;
         public final String title;
+        /**
+         * Coarsest map resolution (m/pixel) at which the label is drawn.
+         * ATAK's default is 10 m/px (street level), which hides TFR labels
+         * at any zoom where the TFR is visible; we show it once the area is
+         * about {@link #LABEL_MIN_PIXELS} pixels across.
+         */
+        public final double labelMaxResM;
 
         Shape(String uid, String tfrId, List<LatLon> outline, int stroke,
                 int fill, Line line, double heightM, String label,
@@ -53,6 +63,8 @@ public final class MapPlan {
             this.heightM = heightM;
             this.label = label;
             this.title = title;
+            this.labelMaxResM = Math.max(10.0,
+                    Boundary.extent(outline) / LABEL_MIN_PIXELS);
         }
 
         /** Changes when anything drawn changes (every point counts). */
@@ -61,7 +73,8 @@ public final class MapPlan {
             for (LatLon p : outline)
                 h = h * 31 + p.hashCode();
             return outline.size() + "|" + h + "|" + stroke + "|" + fill + "|"
-                    + line + "|" + heightM + "|" + label + "|" + title;
+                    + line + "|" + heightM + "|" + label + "|" + title + "|"
+                    + labelMaxResM;
         }
     }
 

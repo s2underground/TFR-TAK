@@ -75,6 +75,20 @@ public class PresentationTest {
         assertNull(MapPlan.idOf("tfrtak-../x-1"));
     }
 
+    /** Device test 0.3: labels must show at zooms where the TFR is visible. */
+    @Test
+    public void labelThresholdScalesWithAreaSize() throws Exception {
+        List<MapPlan.Shape> plan = MapPlan.build(snapshot("2026-11-02T15:00"), false);
+        MapPlan.Shape vip = shape(plan, "6/4199"); // 5 NM circle, ~13 km bbox diagonal
+        double ext = com.atakmap.android.tfr.plugin.core.Boundary.extent(vip.outline);
+        assertEquals(ext / MapPlan.LABEL_MIN_PIXELS, vip.labelMaxResM, 1e-6);
+        assertTrue(vip.labelMaxResM > 50); // far coarser than ATAK's 10 m/px default
+        for (MapPlan.Shape s : plan)
+            assertTrue(s.uid, s.labelMaxResM >= 10.0);
+        // Part of the signature, so a change reaches the map.
+        assertTrue(vip.signature().endsWith("|" + vip.labelMaxResM));
+    }
+
     @Test
     public void mapPlanFiltersAndCancelled() throws Exception {
         Snapshot s = snapshot("2026-11-02T15:00", "6/4199");

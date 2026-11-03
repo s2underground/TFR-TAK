@@ -77,11 +77,27 @@ Remaining, accepted, expected from Fortify too:
 ## Not covered by automated tests (device checklist)
 
 - Labels (`centerPointLabel`) visible; tap opens details without ATAK's
-  shape menu; 3D extrusion (FL430 areas ≈ 13 km); "TFRs (TFR-TAK)" in
+  shape menu; 3D extrusion (FL430 areas ≈ 13 km); "TFR-TAK" in
   Overlay Manager; Show on map zoom; notification; map switch; box states.
 - Offline restart: airplane mode, restart ATAK, TFRs return with the
   connection warning.
 - Minified release APK, not just debug.
+
+## Device test of 0.3 (Nov 2, 2026, dev tablet, ATAK 5.5.1)
+
+Passed: tap opens details (no radial menu), 3D extrusion, Map / Show on
+map zoom, map switch, box collapse, airplane-mode restart.
+Failed, fixed in 0.4:
+- **Labels not shown.** ATAK draws a polyline's `centerPointLabel` only
+  below `maxLabelRenderResolution`, default 10 m/pixel (street level), in
+  both `GLPolyline` and `GLPolylineFeature`. Now set per shape to
+  extent / 150 px (min 10 m/px).
+- **Not in Overlay Manager.** A map group added to the root is not listed;
+  it must be registered with `getMapOverlayManager().addOverlay(new
+  DefaultMapGroupOverlay(...))` (as ATAK's HelloWorld sample does). Group
+  renamed "TFR-TAK"; icon passed as base64:// (URL_SAFE|NO_WRAP, the flags
+  `ATAKUtilities.setIcon` decodes with). New shapes inherit the group's
+  visibility, so hiding it in Overlay Manager also hides TFRs posted later.
 
 ## Known limits (by design, stated in the manual)
 

@@ -6,6 +6,7 @@ import com.atakmap.android.maps.MapItem;
 import com.atakmap.android.maps.MapView;
 import com.atakmap.android.maps.Polyline;
 import com.atakmap.android.maps.Shape;
+import com.atakmap.android.overlay.DefaultMapGroupOverlay;
 import com.atakmap.android.tfr.plugin.core.LatLon;
 import com.atakmap.android.tfr.plugin.ui.MapPlan;
 import com.atakmap.coremap.log.Log;
@@ -21,19 +22,27 @@ import java.util.Set;
  * Draws a {@link MapPlan} as ATAK polylines in the plugin's own map group.
  * Items are local only: never saved by ATAK, never sent over CoT, not
  * editable; they are redrawn from the cache when ATAK starts. Only shapes
- * whose signature changed are touched. Main thread only.
+ * whose signature changed are touched. The group is registered with ATAK's
+ * Overlay Manager (a plain group added to the root is not listed there).
+ * Main thread only.
  */
 public final class MapLayer {
 
     private static final String TAG = "TfrMapLayer";
-    public static final String GROUP_NAME = "TFRs (TFR-TAK)";
+    public static final String GROUP_NAME = "TFR-TAK";
+    /** Name used by 0.1-0.3; removed if left over. */
+    private static final String OLD_GROUP_NAME = "TFRs (TFR-TAK)";
 
     private final MapView mapView;
+    /** base64:// icon for the Overlay Manager entry; may be null. */
+    private final String iconUri;
     private MapGroup group;
+    private DefaultMapGroupOverlay overlay;
     private final Map<String, String> drawn = new HashMap<>();
 
-    public MapLayer(MapView mapView) {
+    public MapLayer(MapView mapView, String iconUri) {
         this.mapView = mapView;
+        this.iconUri = iconUri;
     }
 
     private MapGroup group() {
@@ -45,6 +54,18 @@ public final class MapLayer {
             } else {
                 group = new DefaultMapGroup(GROUP_NAME);
                 mapView.getRootGroup().addGroup(group);
+            }
+            MapGroup old = mapView.getRootGroup().findMapGroup(OLD_GROUP_NAME);
+            if (old != null) {
+                old.clearItems();
+                mapView.getRootGroup().removeGroup(old);
+            }
+            try {
+                overlay = new DefaultMapGroupOverlay(mapView, group, iconUri);
+                mapView.getMapOverlayManager().addOverlay(overlay);
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Overlay Manager registration failed", e);
+                overlay = null;
             }
         }
         return group;
@@ -66,6 +87,8 @@ public final class MapLayer {
                 else {
                     Polyline p = new Polyline(s.uid);
                     style(p, s);
+                    // Hidden from Overlay Manager: new TFRs stay hidden too.
+                    p.setVisible(g.getVisible());
                     g.addItem(p);
                 }
                 drawn.put(s.uid, sig);
@@ -102,6 +125,7 @@ public final class MapLayer {
             p.setHeight(s.heightM);
         p.setTitle(s.title);
         p.setMetaString("centerPointLabel", s.label);
+        p.setMaxLabelRenderResolution(s.labelMaxResM);
         p.setMetaString("tfrtak.id", s.tfrId);
         p.setClickable(true);
         p.setEditable(false);
@@ -119,6 +143,14 @@ public final class MapLayer {
     }
 
     public void dispose() {
+        if (overlay != null) {
+            try {
+                mapView.getMapOverlayManager().removeOverlay(overlay);
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Overlay Manager removal failed", e);
+            }
+            overlay = null;
+        }
         if (group != null) {
             group.clearItems();
             try {
