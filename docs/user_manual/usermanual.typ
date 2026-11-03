@@ -4,7 +4,7 @@
 
 #show: userguide.with(
    plugin-name: "TFR-TAK",
-   plugin-version: "0.5",
+   plugin-version: "1.0",
    platform: "ATAK",
    platform-version: "5.6.0",
 )
