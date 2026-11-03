@@ -64,6 +64,7 @@ See docs/DESIGN.md for details and the FAA file format notes.
 _________________________________________________________________
 STATUS
 
+0.5 (Nov 2026): new icon (airplane over a red TFR ground ring).
 0.4 (Nov 2026): labels now show at normal zoom (ATAK hides polyline
 labels above 10 m/pixel by default; now scaled to each TFR's size);
 "TFR-TAK" listed in Overlay Manager.
