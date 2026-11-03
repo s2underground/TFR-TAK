@@ -203,8 +203,15 @@ public final class Rows {
                             dist = d;
                     }
             }
+            int undrawn = 0;
+            for (TfrArea a : t.areas)
+                if (!a.hasOutline())
+                    undrawn++;
             if (!outline)
                 notes.add("No map graphic in the FAA data. Read the NOTAM text.");
+            else if (undrawn > 0)
+                notes.add(undrawn + " of " + t.areas.size()
+                        + " areas have no map graphic. Read the NOTAM text.");
             if (!t.warnings.isEmpty())
                 notes.add("Some details could not be read with certainty. Check the NOTAM text.");
         }
@@ -313,11 +320,16 @@ public final class Rows {
         }
         sb.append("FDC ").append(t.id).append(" · ")
                 .append(t.category.label).append("\n");
-        sb.append(t.category.regulation).append("\n");
+        sb.append(t.category.regulation);
+        if (!t.cfr.isEmpty() && !t.cfr.equalsIgnoreCase("SPECIAL"))
+            sb.append(" (cited: ").append(t.cfr).append(")");
+        sb.append("\n");
         sb.append(t.place());
         if (!t.facility.isEmpty())
             sb.append(" · ").append(t.facility).append(" ARTCC");
         sb.append("\n");
+        if (t.issuedMs > 0)
+            sb.append("Issued: ").append(f.when(t.issuedMs)).append("\n");
         sb.append("Effective: ").append(t.effectiveMs <= 0 ? "in effect"
                 : f.when(t.effectiveMs)).append("\n");
         sb.append("Ends: ").append(f.when(t.expireMs)).append("\n");

@@ -34,10 +34,17 @@ public final class NotamId {
         return sb.toString();
     }
 
-    /** "6_4199": the form used in FAA file names and in our map item ids. */
+    /**
+     * "6_4199": the form used in FAA file names and in our map item ids.
+     * Rebuilt from the two numbers (not the input text), so nothing from the
+     * network can reach a file name or URL except digits.
+     */
     public static String fileKey(String id) {
         if (!isValid(id))
             throw new IllegalArgumentException("invalid NOTAM id");
-        return id.replace('/', '_');
+        int slash = id.indexOf('/');
+        int year = Integer.parseInt(id.substring(0, slash));
+        int seq = Integer.parseInt(id.substring(slash + 1));
+        return String.format(java.util.Locale.US, "%d_%04d", year, seq);
     }
 }

@@ -4,9 +4,13 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -19,8 +23,10 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Parses one FAA TFR detail file ({@code tfr.faa.gov/download/detail_N_NNNN.xml},
@@ -49,16 +55,32 @@ public final class TfrXmlParser {
 
     public static Tfr parse(byte[] xml, String expectedId)
             throws ParseException {
+        return parse(xml, expectedId, null);
+    }
+
+    /**
+     * @param listType the TFR's type word in the FAA list ("SECURITY",
+     *            "VIP"...), used for the category when the cited regulation
+     *            isn't recognised; may be null
+     */
+    public static Tfr parse(byte[] xml, String expectedId, String listType)
+            throws ParseException {
         if (xml == null || xml.length == 0)
             throw new ParseException("empty file");
         if (xml.length > MAX_BYTES)
             throw new ParseException("file too large");
         if (!NotamId.isValid(expectedId))
             throw new ParseException("invalid NOTAM id");
-        // No DTDs or entities in FAA files: refuse any, before parsing.
-        String head = new String(xml, 0, Math.min(xml.length, 4096),
-                StandardCharsets.ISO_8859_1).toUpperCase(Locale.US);
-        if (head.contains("<!DOCTYPE") || head.contains("<!ENTITY"))
+        // FAA files are UTF-8 (with or without BOM). Refuse UTF-16/32, which
+        // would hide markup from the DOCTYPE scan below.
+        if (xml.length >= 2 && (((xml[0] & 0xFF) == 0xFE && (xml[1] & 0xFF) == 0xFF)
+                || ((xml[0] & 0xFF) == 0xFF && (xml[1] & 0xFF) == 0xFE)
+                || xml[0] == 0 || xml[1] == 0))
+            throw new ParseException("unexpected encoding");
+        // No DTDs or entities in FAA files: refuse any, anywhere in the file.
+        String whole = new String(xml, StandardCharsets.ISO_8859_1)
+                .toUpperCase(Locale.US);
+        if (whole.contains("<!DOCTYPE") || whole.contains("<!ENTITY"))
             throw new ParseException("unexpected DOCTYPE");
 
         Document doc = parseDom(xml);
@@ -108,7 +130,8 @@ public final class TfrXmlParser {
         String localName = text(not, "NotUid", "txtLocalName");
 
         List<TfrArea> areas = tfrNot == null ? new ArrayList<TfrArea>()
-                : areas(tfrNot, eff, exp, warnings);
+                : areas(tfrNot, eff, exp,
+                        zoneOffsetMinutes(text(not, "codeTimeZone")), warnings);
         if (areas.isEmpty()) {
             // Keep the TFR (its text is authoritative) with no outline.
             areas.add(new TfrArea("", new Altitude(Altitude.Ref.UNKNOWN, 0),
@@ -118,35 +141,70 @@ public final class TfrXmlParser {
                     "No areas in the FAA data. Read the NOTAM text."));
         }
 
-        return new Tfr(id, cfr, Category.of(cfr, null), facility, city,
+        return new Tfr(id, cfr, Category.of(cfr, listType), facility, city,
                 state, localName, issued, eff, exp, txt.trim(), areas, warnings);
     }
 
+    /**
+     * DOM parse with every external-entity defence the platform supports.
+     * Android's parser rejects some features (it never resolves external
+     * entities anyway); DOCTYPEs are also refused before parsing (above).
+     */
     private static Document parseDom(byte[] xml) throws ParseException {
+        DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+        f.setNamespaceAware(false);
+        f.setValidating(false);
+        f.setExpandEntityReferences(false);
         try {
-            DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
-            f.setNamespaceAware(false);
-            f.setValidating(false);
-            f.setExpandEntityReferences(false);
-            trySetFeature(f, "http://apache.org/xml/features/disallow-doctype-decl", true);
-            trySetFeature(f, "http://xml.org/sax/features/external-general-entities", false);
-            trySetFeature(f, "http://xml.org/sax/features/external-parameter-entities", false);
-            trySetFeature(f, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            f.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        } catch (ParserConfigurationException | RuntimeException e) {
+            unsupported("disallow-doctype-decl not supported");
+        }
+        try {
+            f.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        } catch (ParserConfigurationException | RuntimeException e) {
+            unsupported("external-general-entities not supported");
+        }
+        try {
+            f.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        } catch (ParserConfigurationException | RuntimeException e) {
+            unsupported("external-parameter-entities not supported");
+        }
+        try {
+            f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        } catch (ParserConfigurationException | RuntimeException e) {
+            unsupported("secure processing not supported");
+        }
+        try {
+            f.setXIncludeAware(false);
+        } catch (UnsupportedOperationException e) {
+            unsupported("XInclude setting not supported");
+        }
+        try {
             DocumentBuilder b = f.newDocumentBuilder();
+            b.setEntityResolver(new EntityResolver() {
+                @Override
+                public InputSource resolveEntity(String publicId, String systemId) {
+                    // Never fetch anything the file points to.
+                    return new InputSource(new StringReader(""));
+                }
+            });
             return b.parse(new InputSource(new ByteArrayInputStream(xml)));
-        } catch (Exception e) {
+        } catch (ParserConfigurationException | SAXException | IOException
+                | RuntimeException e) {
             throw new ParseException("malformed XML");
         }
     }
 
-    private static void trySetFeature(DocumentBuilderFactory f, String name,
-            boolean v) {
-        try {
-            f.setFeature(name, v);
-        } catch (Exception ignored) {
-            // Not every platform parser knows every feature; DOCTYPEs are
-            // refused before parsing anyway.
-        }
+    /**
+     * A parser feature the platform doesn't support. Expected on Android
+     * (its parser never resolves external entities and DOCTYPEs are refused
+     * before parsing), so not an error; kept for debugging.
+     */
+    static String lastUnsupported;
+
+    private static void unsupported(String what) {
+        lastUnsupported = what;
     }
 
     // ---- id -----------------------------------------------------------
@@ -166,6 +224,7 @@ public final class TfrXmlParser {
     // ---- areas --------------------------------------------------------
 
     private static List<TfrArea> areas(Element tfrNot, long eff, long exp,
+            int zoneOffsetMin,
             List<String> warnings) {
         // Shapes and merged outlines are linked to areas by id; collect them
         // across the whole TfrNot so the exact nesting doesn't matter.
@@ -209,7 +268,8 @@ public final class TfrXmlParser {
                     || floor.ref == Altitude.Ref.UNKNOWN)
                 warnings.add("Altitudes of " + label
                         + " unreadable; see the NOTAM text.");
-            Schedule sched = schedule(a, eff, exp, label, warnings);
+            Schedule sched = schedule(a, eff, exp, zoneOffsetMin, label,
+                    warnings);
             out.add(geometry(name, floor, ceiling, sched, links.get(aid),
                     shapes, merged.get(aid), label, warnings));
         }
@@ -358,6 +418,16 @@ public final class TfrXmlParser {
 
     static Schedule schedule(Element area, long eff, long exp, String label,
             List<String> warnings) {
+        return schedule(area, eff, exp, 0, label, warnings);
+    }
+
+    /**
+     * @param zoneOffsetMin offset of the NOTAM's local zone from UTC
+     *            ({@link #zoneOffsetMinutes}), or {@link Integer#MIN_VALUE}
+     *            if unknown
+     */
+    static Schedule schedule(Element area, long eff, long exp,
+            int zoneOffsetMin, String label, List<String> warnings) {
         boolean uncertain = false;
         Set<Schedule.Day> days = EnumSet.noneOf(Schedule.Day.class);
         for (Element d : children(area, "dayCode")) {
@@ -396,11 +466,17 @@ public final class TfrXmlParser {
             }
             if (ws == we) // 24 h window: simply continuous
                 periods.add(new Schedule.Period(s, e));
-            else
-                periods.add(new Schedule.Period(s, e, true, ws, we, days));
+            else {
+                if (!days.isEmpty() && zoneOffsetMin == Integer.MIN_VALUE)
+                    uncertain = true; // can't tell which days are meant
+                periods.add(new Schedule.Period(s, e, true, ws, we, days,
+                        zoneOffsetMin == Integer.MIN_VALUE ? 0 : zoneOffsetMin));
+            }
         }
-        if (periods.isEmpty()) {
-            // No (usable) per-area schedule: the NOTAM's overall times.
+        if (periods.isEmpty() || uncertain) {
+            // No usable per-area schedule, or part of it unreadable: the
+            // NOTAM's overall times too, so nothing that was skipped can make
+            // the area look ended while the NOTAM is in effect.
             periods.add(new Schedule.Period(eff, exp));
         }
         if (uncertain)
@@ -410,12 +486,56 @@ public final class TfrXmlParser {
         return new Schedule(periods, uncertain);
     }
 
+    /**
+     * UTC offset in minutes of the zone abbreviations the FAA uses in
+     * {@code codeTimeZone}; {@link Integer#MIN_VALUE} if unknown.
+     */
+    static int zoneOffsetMinutes(String zone) {
+        String z = up(zone);
+        switch (z) {
+            case "UTC":
+            case "GMT":
+            case "Z":
+                return 0;
+            case "AST":
+                return -240; // Atlantic (Puerto Rico, USVI)
+            case "EST":
+                return -300;
+            case "EDT":
+                return -240;
+            case "CST":
+                return -360;
+            case "CDT":
+                return -300;
+            case "MST":
+                return -420;
+            case "MDT":
+                return -360;
+            case "PST":
+                return -480;
+            case "PDT":
+                return -420;
+            case "AKST":
+                return -540;
+            case "AKDT":
+                return -480;
+            case "HST":
+                return -600;
+            case "SST":
+                return -660; // Samoa
+            case "CHST":
+                return 600; // Guam
+            default:
+                return Integer.MIN_VALUE;
+        }
+    }
+
     private static final Pattern TIME = Pattern.compile(
             "^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})(?::(\\d{2})(?:\\.\\d+)?)?Z?$");
 
     /** "2026-11-02T14:15:00" (UTC) to epoch ms; -1 if unreadable. */
     public static long time(String s) {
-        if (s == null)
+        if (s == null || s.length() > 40)
             return -1;
         Matcher m = TIME.matcher(s.trim());
         if (!m.matches())
@@ -432,7 +552,7 @@ public final class TfrXmlParser {
 
     /** Minute of day from a date-time's time part; -1 if unreadable. */
     static int minuteOfDay(String s) {
-        if (s == null)
+        if (s == null || s.length() > 40)
             return -1;
         Matcher m = TIME.matcher(s.trim());
         if (!m.matches())

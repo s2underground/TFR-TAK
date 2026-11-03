@@ -16,12 +16,16 @@ import java.util.Set;
  * to {@code dateExpire}, active each day from the time-of-day of
  * {@code startTime} to that of {@code endTime} (the dates in those two
  * fields are meaningless), crossing midnight when the end is earlier than
- * the start. Optional {@code dayCode}s on the area limit which UTC days a
- * window may start on ("Daily" or day names).
+ * the start. Optional {@code dayCode}s on the area limit which days a
+ * window may start on ("Daily" or day names). Whether those are UTC or
+ * local days isn't documented, so a window counts if either its UTC day or
+ * its local day (NOTAM time zone) is listed: this can only show a
+ * restriction on more days than published, never fewer.
  *
  * <p>Anything that can't be read with certainty makes the schedule
- * {@link #uncertain}: it is then treated as active for its whole overall
- * period, so a doubtful schedule can never hide a restriction.
+ * {@link #uncertain}: it is then treated as active from its first start to
+ * its last end (the parser adds the NOTAM's overall period), so a doubtful
+ * schedule can never hide a restriction.
  */
 public final class Schedule {
 
@@ -37,15 +41,24 @@ public final class Schedule {
         public final boolean daily;
         /** Minutes after 0000Z the daily window opens/closes. */
         public final int dailyStartMin, dailyEndMin;
-        /** UTC days a daily window may start on; empty = every day. */
+        /** Days a daily window may start on; empty = every day. */
         public final Set<Day> days;
+        /** UTC offset (min) of the NOTAM's local zone, for {@link #days}. */
+        public final int zoneOffsetMin;
 
         public Period(long startMs, long endMs) {
-            this(startMs, endMs, false, 0, 0, EnumSet.noneOf(Day.class));
+            this(startMs, endMs, false, 0, 0, EnumSet.noneOf(Day.class), 0);
         }
 
         public Period(long startMs, long endMs, boolean daily,
                 int dailyStartMin, int dailyEndMin, Set<Day> days) {
+            this(startMs, endMs, daily, dailyStartMin, dailyEndMin, days, 0);
+        }
+
+        public Period(long startMs, long endMs, boolean daily,
+                int dailyStartMin, int dailyEndMin, Set<Day> days,
+                int zoneOffsetMin) {
+            this.zoneOffsetMin = zoneOffsetMin;
             this.startMs = startMs;
             this.endMs = endMs;
             this.daily = daily;
@@ -61,9 +74,15 @@ public final class Schedule {
             return len <= 0 ? len + 1440 : len;
         }
 
+        /** May the window starting on this UTC day run? (UTC or local day.) */
         boolean startsOn(long dayStartMs) {
-            return days.isEmpty() || days.contains(Day.ofEpochDay(
-                    Math.floorDiv(dayStartMs, DAY)));
+            if (days.isEmpty())
+                return true;
+            if (days.contains(Day.ofEpochDay(Math.floorDiv(dayStartMs, DAY))))
+                return true;
+            long localStart = dayStartMs + dailyStartMin * MIN
+                    + zoneOffsetMin * MIN;
+            return days.contains(Day.ofEpochDay(Math.floorDiv(localStart, DAY)));
         }
 
         /** Is the period in effect at t? */

@@ -187,7 +187,10 @@ public final class TfrPlugin implements IPlugin {
             return; // stopped
         latest = s;
         redraw();
-        if (controller != null)
+        // The list work (distances etc.) only while the pane is on screen;
+        // showPane() hands it the latest snapshot when it opens.
+        if (controller != null && pane != null && uiService != null
+                && uiService.isPaneVisible(pane))
             controller.update(s);
         if (!s.newIds.isEmpty())
             alertNew(s);

@@ -1,0 +1,811 @@
+﻿<XNOTAM-Update xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="0.1" origin="" created="2026-10-31T17:51:25">
+  <Group>
+    <Add>
+      <Not>
+        <NotUid>
+          <txtNameAcctFac>FDC</txtNameAcctFac>
+          <dateIndexYear>2026</dateIndexYear>
+          <noSeqNo>4198</noSeqNo>
+          <dateIssued>2026-10-31T22:47:30</dateIssued>
+          <txtLocalName>6/4198</txtLocalName>
+          <codeGUID>be4835d0-a7ad-4002-9db1-9e49fcc5ad63</codeGUID>
+        </NotUid>
+        <codeDailyOper>true</codeDailyOper>
+        <dateEffective>2026-11-01T14:00:00</dateEffective>
+        <dateExpire>2026-11-07T23:59:00</dateExpire>
+        <codeTimeZone>UTC</codeTimeZone>
+        <codeExpirationTimeZone>UTC</codeExpirationTimeZone>
+        <AffLocGroup>
+          <txtNameCity>PAGOSA SPRINGS</txtNameCity>
+          <txtNameUSState>COLORADO</txtNameUSState>
+        </AffLocGroup>
+        <codeFacility>ZDV</codeFacility>
+        <TfrNot>
+          <codeType>91.137(a)(2)</codeType>
+          <TFRAreaGroup>
+            <aseTFRArea>
+              <AseUid>
+                <codeType>RAS</codeType>
+                <codeId>2559</codeId>
+              </AseUid>
+              <txtName>Hazard Area1</txtName>
+              <codeDistVerUpper>HEI</codeDistVerUpper>
+              <valDistVerUpper>1000</valDistVerUpper>
+              <uomDistVerUpper>FT</uomDistVerUpper>
+              <codeDistVerLower>HEI</codeDistVerLower>
+              <valDistVerLower>0</valDistVerLower>
+              <uomDistVerLower>FT</uomDistVerLower>
+              <Att>
+                <codeWorkHr>NOTAM</codeWorkHr>
+              </Att>
+              <codeExclVerUpper>INCLUDE</codeExclVerUpper>
+              <codeExclVerLower>INCLUDE</codeExclVerLower>
+              <isScheduledTfrArea>TRUE</isScheduledTfrArea>
+              <dayCode>Daily</dayCode>
+              <ScheduleGroup>
+                <isTimeSeparate>TRUE</isTimeSeparate>
+                <dateEffective>2026-11-01T14:00:00</dateEffective>
+                <dateExpire>2026-11-07T23:59:00</dateExpire>
+                <startTime>2026-10-31T14:00:00</startTime>
+                <endTime>2026-10-31T23:59:00</endTime>
+              </ScheduleGroup>
+            </aseTFRArea>
+            <Aac>
+              <AacUid>
+                <AseUidChi>
+                  <codeType>RAS</codeType>
+                  <codeId>2559</codeId>
+                </AseUidChi>
+                <AseUidPar>
+                  <codeType>PART</codeType>
+                  <codeId>2560</codeId>
+                </AseUidPar>
+              </AacUid>
+              <codeType>BOM</codeType>
+              <codeOpr>BASE</codeOpr>
+            </Aac>
+            <abdMergedArea>
+              <AbdUid>
+                <AseUid>
+                  <codeType>RAS</codeType>
+                  <codeId>2559</codeId>
+                </AseUid>
+              </AbdUid>
+              <txtRmk>2559</txtRmk>
+              <Avx>
+                <codeDatum>WGE</codeDatum>
+                <codeType>GRC</codeType>
+                <geoLat>37.00138889N</geoLat>
+                <geoLong>106.93472222W</geoLong>
+              </Avx>
+              <Avx>
+                <codeDatum>WGE</codeDatum>
+                <codeType>GRC</codeType>
+                <geoLat>37.005N</geoLat>
+                <geoLong>106.93416667W</geoLong>
+              </Avx>
+              <Avx>
+                <codeDatum>WGE</codeDatum>
+                <codeType>GRC</codeType>
+                <geoLat>37.18083333N</geoLat>
+                <geoLong>106.93444444W</geoLong>
+              </Avx>
+              <Avx>
+                <codeDatum>WGE</codeDatum>
+                <codeType>GRC</codeType>
+                <geoLat>37.18194444N</geoLat>
+                <geoLong>107.14861111W</geoLong>
+              </Avx>
+              <Avx>
+                <codeDatum>WGE</codeDatum>
+                <codeType>GRC</codeType>
+                <geoLat>37.2375N</geoLat>
+                <geoLong>107.14861111W</geoLong>
+              </Avx>
+              <Avx>
+                <codeDatum>WGE</codeDatum>
+                <codeType>GRC</codeType>
+                <geoLat>37.2375N</geoLat>
+                <geoLong>107.41111111W</geoLong>
+              </Avx>
+              <Avx>
+                <codeDatum>WGE</codeDatum>
+                <codeType>GRC</codeType>
+                <geoLat>37.00111111N</geoLat>
+                <geoLong>107.41611111W</geoLong>
+              </Avx>
+              <Avx>
+                <codeDatum>WGE</codeDatum>
+                <codeType>GRC</codeType>
+                <geoLat>37.00138889N</geoLat>
+                <geoLong>106.93472222W</geoLong>
+              </Avx>
+            </abdMergedArea>
+            <aseShapes>
+              <AseUid>
+                <codeType>PART</codeType>
+                <codeId>2560</codeId>
+              </AseUid>
+              <Att>
+                <codeWorkHr>NOTAM</codeWorkHr>
+              </Att>
+              <Abd>
+                <AbdUid>
+                  <AseUid>
+                    <codeType>PART</codeType>
+                    <codeId>2560</codeId>
+                  </AseUid>
+                </AbdUid>
+                <txtRmk>2560</txtRmk>
+                <valPredefinedAirspace>false</valPredefinedAirspace>
+                <Avx>
+                  <codeDatum>WGE</codeDatum>
+                  <codeType>GRC</codeType>
+                  <geoLat>37.00138889N</geoLat>
+                  <geoLong>106.93472222W</geoLong>
+                  <Frd>
+                    <FrdUid>
+                      <DpnUid>
+                        <codeId>DRO40</codeId>
+                        <geoLat>37.00138889N</geoLat>
+                        <geoLong>106.93472222W</geoLong>
+                      </DpnUid>
+                    </FrdUid>
+                    <Ain>
+                      <VorUid>
+                        <codeId>DRO</codeId>
+                        <geoLat>37.00138889N</geoLat>
+                        <geoLong>106.93472222W</geoLong>
+                      </VorUid>
+                      <valAngleBrg>089.0</valAngleBrg>
+                    </Ain>
+                    <Din>
+                      <DmeUid>
+                        <codeId>DRO</codeId>
+                        <geoLat>37.00138889N</geoLat>
+                        <geoLong>106.93472222W</geoLong>
+                      </DmeUid>
+                      <valDist>40.1</valDist>
+                      <uomDist>NM</uomDist>
+                    </Din>
+                    <txtRmk>DURANGO</txtRmk>
+                  </Frd>
+                </Avx>
+                <Avx>
+                  <codeDatum>WGE</codeDatum>
+                  <codeType>GRC</codeType>
+                  <geoLat>37.005N</geoLat>
+                  <geoLong>106.93416667W</geoLong>
+                  <Frd>
+                    <FrdUid>
+                      <DpnUid>
+                        <codeId>DRO40</codeId>
+                        <geoLat>37.005N</geoLat>
+                        <geoLong>106.93416667W</geoLong>
+                      </DpnUid>
+                    </FrdUid>
+                    <Ain>
+                      <VorUid>
+                        <codeId>DRO</codeId>
+                        <geoLat>37.005N</geoLat>
+                        <geoLong>106.93416667W</geoLong>
+                      </VorUid>
+                      <valAngleBrg>089.0</valAngleBrg>
+                    </Ain>
+                    <Din>
+                      <DmeUid>
+                        <codeId>DRO</codeId>
+                        <geoLat>37.005N</geoLat>
+                        <geoLong>106.93416667W</geoLong>
+                      </DmeUid>
+                      <valDist>40.1</valDist>
+                      <uomDist>NM</uomDist>
+                    </Din>
+                    <txtRmk>DURANGO</txtRmk>
+                  </Frd>
+                </Avx>
+                <Avx>
+                  <codeDatum>WGE</codeDatum>
+                  <codeType>GRC</codeType>
+                  <geoLat>37.18083333N</geoLat>
+                  <geoLong>106.93444444W</geoLong>
+                  <Frd>
+                    <FrdUid>
+                      <DpnUid>
+                        <codeId>DRO39</codeId>
+                        <geoLat>37.18083333N</geoLat>
+                        <geoLong>106.93444444W</geoLong>
+                      </DpnUid>
+                    </FrdUid>
+                    <Ain>
+                      <VorUid>
+                        <codeId>DRO</codeId>
+                        <geoLat>37.18083333N</geoLat>
+                        <geoLong>106.93444444W</geoLong>
+                      </VorUid>
+                      <valAngleBrg>073.0</valAngleBrg>
+                    </Ain>
+                    <Din>
+                      <DmeUid>
+                        <codeId>DRO</codeId>
+                        <geoLat>37.18083333N</geoLat>
+                        <geoLong>106.93444444W</geoLong>
+                      </DmeUid>
+                      <valDist>39.0</valDist>
+                      <uomDist>NM</uomDist>
+                    </Din>
+                    <txtRmk>DURANGO</txtRmk>
+                  </Frd>
+                </Avx>
+                <Avx>
+                  <codeDatum>WGE</codeDatum>
+                  <codeType>GRC</codeType>
+                  <geoLat>37.18194444N</geoLat>
+                  <geoLong>107.14861111W</geoLong>
+                  <Frd>
+                    <FrdUid>
+                      <DpnUid>
+                        <codeId>DRO28</codeId>
+                        <geoLat>37.18194444N</geoLat>
+                        <geoLong>107.14861111W</geoLong>
+                      </DpnUid>
+                    </FrdUid>
+                    <Ain>
+                      <VorUid>
+                        <codeId>DRO</codeId>
+                        <geoLat>37.18194444N</geoLat>
+                        <geoLong>107.14861111W</geoLong>
+                      </VorUid>
+                      <valAngleBrg>072.0</valAngleBrg>
+                    </Ain>
+                    <Din>
+                      <DmeUid>
+                        <codeId>DRO</codeId>
+                        <geoLat>37.18194444N</geoLat>
+                        <geoLong>107.14861111W</geoLong>
+                      </DmeUid>
+                      <valDist>28.8</valDist>
+                      <uomDist>NM</uomDist>
+                    </Din>
+                    <txtRmk>DURANGO</txtRmk>
+                  </Frd>
+                </Avx>
+                <Avx>
+                  <codeDatum>WGE</codeDatum>
+                  <codeType>GRC</codeType>
+                  <geoLat>37.2375N</geoLat>
+                  <geoLong>107.14861111W</geoLong>
+                  <Frd>
+                    <FrdUid>
+                      <DpnUid>
+                        <codeId>DRO29</codeId>
+                        <geoLat>37.2375N</geoLat>
+                        <geoLong>107.14861111W</geoLong>
+                      </DpnUid>
+                    </FrdUid>
+                    <Ain>
+                      <VorUid>
+                        <codeId>DRO</codeId>
+                        <geoLat>37.2375N</geoLat>
+                        <geoLong>107.14861111W</geoLong>
+                      </VorUid>
+                      <valAngleBrg>066.0</valAngleBrg>
+                    </Ain>
+                    <Din>
+                      <DmeUid>
+                        <codeId>DRO</codeId>
+                        <geoLat>37.2375N</geoLat>
+                        <geoLong>107.14861111W</geoLong>
+                      </DmeUid>
+                      <valDist>29.2</valDist>
+                      <uomDist>NM</uomDist>
+                    </Din>
+                    <txtRmk>DURANGO</txtRmk>
+                  </Frd>
+                </Avx>
+                <Avx>
+                  <codeDatum>WGE</codeDatum>
+                  <codeType>GRC</codeType>
+                  <geoLat>37.2375N</geoLat>
+                  <geoLong>107.41111111W</geoLong>
+                  <Frd>
+                    <FrdUid>
+                      <DpnUid>
+                        <codeId>DRO17</codeId>
+                        <geoLat>37.2375N</geoLat>
+                        <geoLong>107.41111111W</geoLong>
+                      </DpnUid>
+                    </FrdUid>
+                    <Ain>
+                      <VorUid>
+                        <codeId>DRO</codeId>
+                        <geoLat>37.2375N</geoLat>
+                        <geoLong>107.41111111W</geoLong>
+                      </VorUid>
+                      <valAngleBrg>059.0</valAngleBrg>
+                    </Ain>
+                    <Din>
+                      <DmeUid>
+                        <codeId>DRO</codeId>
+                        <geoLat>37.2375N</geoLat>
+                        <geoLong>107.41111111W</geoLong>
+                      </DmeUid>
+                      <valDist>17.0</valDist>
+                      <uomDist>NM</uomDist>
+                    </Din>
+                    <txtRmk>DURANGO</txtRmk>
+                  </Frd>
+                </Avx>
+                <Avx>
+                  <codeDatum>WGE</codeDatum>
+                  <codeType>GRC</codeType>
+                  <geoLat>37.00111111N</geoLat>
+                  <geoLong>107.41611111W</geoLong>
+                  <Frd>
+                    <FrdUid>
+                      <DpnUid>
+                        <codeId>RSK36</codeId>
+                        <geoLat>37.00111111N</geoLat>
+                        <geoLong>107.41611111W</geoLong>
+                      </DpnUid>
+                    </FrdUid>
+                    <Ain>
+                      <VorUid>
+                        <codeId>RSK</codeId>
+                        <geoLat>37.00111111N</geoLat>
+                        <geoLong>107.41611111W</geoLong>
+                      </VorUid>
+                      <valAngleBrg>051.0</valAngleBrg>
+                    </Ain>
+                    <Din>
+                      <TcnUid>
+                        <codeId>RSK</codeId>
+                        <geoLat>37.00111111N</geoLat>
+                        <geoLong>107.41611111W</geoLong>
+                      </TcnUid>
+                      <valDist>36.1</valDist>
+                      <uomDist>NM</uomDist>
+                    </Din>
+                    <txtRmk>RATTLESNAKE</txtRmk>
+                  </Frd>
+                </Avx>
+              </Abd>
+            </aseShapes>
+            <InstructionsGroup />
+            <codeIncFRD>TRUE</codeIncFRD>
+            <codeShpPrt>COMPOSITE</codeShpPrt>
+            <codeLclTime>TRUE</codeLclTime>
+            <codeAuthATC>FALSE</codeAuthATC>
+          </TFRAreaGroup>
+          <TemplateType>BigThreatLanguage</TemplateType>
+          <codeCtrlFacilityType>ARTCC</codeCtrlFacilityType>
+        </TfrNot>
+        <txtNameCoordFacility>DENVER</txtNameCoordFacility>
+        <codeCoordFacility>ZDV</codeCoordFacility>
+        <codeCoordFacilityType>ARTCC</codeCoordFacilityType>
+        <txtAddrCoordPhone>303-651-4248</txtAddrCoordPhone>
+        <txtNamePOC>MEGANCK ,  OR EMAIL CAMERON.MEGANCK@STATE.CO.US ARCHULETA COUNTY FLOOD RESPONSE</txtNamePOC>
+        <txtAddrPOCPhone>719-252-3457</txtAddrPOCPhone>
+        <valFreqPOC>126.7</valFreqPOC>
+        <txtDescrUSNS>!FDC 6/4198 ZDV CO..AIRSPACE PAGOSA SPRINGS, CO..TEMPORARY FLIGHT RESTRICTIONS. PURSUANT TO 14 CFR SECTION 91.137(A)(2) TEMPORARY FLIGHT RESTRICTIONS ARE IN EFFECT FOR DISASTER RELIEF ACFT OPS. WI AN AREA DEFINED AS 370005N1065605W (DRO089040.1) TO 370018N1065603W (DRO089040.1) TO 371051N1065604W (DRO073039.0) TO 371055N1070855W (DRO072028.8) TO 371415N1070855W (DRO066029.2) TO 371415N1072440W (DRO059017.0) TO 370004N1072458W (RSK051036.1) TO POINT OF ORIGIN SFC-1000FT AGL STATE OF COLORADO PUBLIC SAFETY, CAMERON MEGANCK TEL 719-252-3457 OR FREQ 126.7 OR EMAIL CAMERON.MEGANCK@STATE.CO.US ARCHULETA COUNTY FLOOD RESPONSE IS IN CHARGE OF THE OPERATION. DENVER/ZDV/ARTCC TEL 303-651-4248 IS THE FAA CDN FAC. DLY 1400-2359 2611011400-2611072359</txtDescrUSNS>
+        <txtDescrTraditional>!FDC 6/4198 ZDV CO..AIRSPACE PAGOSA SPRINGS, CO..TEMPORARY FLIGHT RESTRICTION. PURSUANT TO 14 CFR SECTION 91.137(A)(2), TEMPORARY FLIGHT RESTRICTIONS ARE IN EFFECT WI AN AREA DEFINED AS 370005N1065605W (DRO089040.1) TO 370018N1065603W (DRO089040.1) TO 371051N1065604W (DRO073039) TO 371055N1070855W (DRO072028.8) TO 371415N1070855W (DRO066029.2) TO 371415N1072440W (DRO059017) TO 370004N1072458W (RSK051036.1) TO THE POINT OF ORIGIN SFC-1000FT AGL EFFECTIVE 2611011400 UTC UNTIL 2611072359 UTC DLY 1400-2359. MEGANCK , OR EMAIL CAMERON.MEGANCK@STATE.CO.US ARCHULETA COUNTY FLOOD RESPONSE, TEL 719-252-3457, /FREQ 126.7 IS IN CHARGE OF ON SCENE EMERGENCY RESPONSE ACTIVITIES. THE DENVER /ZDV/ ARTCC, TEL 303-651-4248, IS THE CDN FAC. 2611011400-2611072359</txtDescrTraditional>
+        <txtDescrModern>&lt;html&gt;
+  &lt;span style="Arial" valign="Top"&gt;
+    &lt;Body&gt;
+      &lt;Table cellpadding="1" cellspacing="0"&gt;
+        &lt;TR bgcolor="#1E90FF"&gt;
+          &lt;TD colspan="3" align="left" valign="bottom" width="250"&gt;
+            &lt;b&gt;
+              &lt;font color="#FFFFFF" size="3" face="Arial"&gt;NOTAM Number     :&lt;/font&gt;
+            &lt;/b&gt;
+          &lt;/TD&gt;
+          &lt;TD valign="bottom" align="left" width="320"&gt;
+            &lt;b&gt;
+              &lt;font color="#FFFFFF" size="3" face="Arial"&gt;FDC 6/4198&lt;/font&gt;
+            &lt;/b&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="3" align="left" valign="top"&gt;
+            &lt;font face="Arial" size="2"&gt;Issue Date     :&lt;/font&gt;
+          &lt;/TD&gt;
+          &lt;TD valign="top"&gt;
+            &lt;font face="Arial" size="2"&gt;October 31, 2026 at 2247 UTC&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="3" align="left" valign="top"&gt;
+            &lt;font face="Arial" size="2"&gt;Location     :&lt;/font&gt;
+          &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;PAGOSA SPRINGS, Colorado&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="3" align="left" valign="top"&gt;
+            &lt;font face="Arial" size="2"&gt;Beginning Date and Time     :&lt;/font&gt;
+          &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;November 01, 2026 UTC 1400-2359 Daily&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="3" align="left" valign="top"&gt;
+            &lt;font face="Arial" size="2"&gt;Ending Date and Time     :&lt;/font&gt;
+          &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;November 07, 2026 UTC&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="3" align="left" valign="top"&gt;
+            &lt;font face="Arial" size="2"&gt;Reason for NOTAM     :&lt;/font&gt;
+          &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;Temporary flight restrictions&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="3" align="left" valign="top"&gt;
+            &lt;font face="Arial" size="2"&gt;Type     :&lt;/font&gt;
+          &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;Hazards&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="3" align="left" valign="top"&gt;
+            &lt;font face="Arial" size="2"&gt;Replaced NOTAM(s)     :&lt;/font&gt;
+          &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;N/A&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="3" align="left" valign="top"&gt;
+            &lt;font face="Arial" size="2"&gt;Pilots May Contact     :&lt;/font&gt;
+          &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;DENVER (ZDV) ARTCC, 303-651-4248&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="2" height="20"&gt;  &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="3" align="right" valign="top"&gt;
+            &lt;font face="Arial" size="2"&gt;
+              &lt;b&gt;Jump To: &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/b&gt;
+            &lt;/font&gt;
+          &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;
+              &lt;b&gt;
+                &lt;a href="#areas" class="internal"&gt; Affected Areas &lt;/a&gt;&lt;br/&gt;&lt;a href="#restrictions" class="internal"&gt; Operating Restrictions and Requirements &lt;/a&gt;&lt;br/&gt;&lt;a href="#other" class="internal"&gt; Other Information &lt;/a&gt;&lt;br/&gt;&lt;/b&gt;
+            &lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="2" height="20"&gt;  &lt;/TD&gt;
+        &lt;/TR&gt;
+      &lt;/Table&gt;
+      &lt;Table cellpadding="1" cellspacing="0"&gt;
+        &lt;TR bgcolor="#1E90FF"&gt;
+          &lt;TD colspan="5"&gt;
+            &lt;a name="areas"&gt;
+              &lt;b&gt;
+                &lt;font color="#FFFFFF" size="3" face="Arial"&gt;Affected Area(s)&lt;/font&gt;
+              &lt;/b&gt;
+            &lt;/a&gt;
+          &lt;/TD&gt;
+          &lt;TD colspan="1" align="right"&gt;
+            &lt;a href="#"&gt;
+              &lt;font color="#FFFFFF" face="Arial"&gt;
+                &lt;b&gt;Top&lt;/b&gt;
+              &lt;/font&gt;
+            &lt;/a&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="2" height="10"&gt;  &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="3" width="200"&gt;
+            &lt;font face="Arial" size="2"&gt;
+              &lt;b&gt;Airspace Definition:&lt;/b&gt;
+            &lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD&gt; &lt;/TD&gt;
+          &lt;TD&gt; &lt;/TD&gt;
+          &lt;td colspan="3"&gt;
+            &lt;font face="Arial" size="2"&gt;Region bounded by:&lt;/font&gt;
+          &lt;/td&gt;
+        &lt;/TR&gt;
+        &lt;tr&gt;
+          &lt;td&gt;   &lt;/td&gt;
+          &lt;td&gt;   &lt;/td&gt;
+          &lt;td colspan="2"&gt;
+            &lt;table valign="top" border="0"&gt;
+              &lt;tr&gt;
+                &lt;td width="20" /&gt;
+                &lt;td width="140" /&gt;
+                &lt;td colspan="1" width="300"&gt;
+                  &lt;font face="Arial" size="2"&gt;
+                    &lt;u&gt; &lt;/u&gt;
+                  &lt;/font&gt;
+                &lt;/td&gt;
+                &lt;td colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;
+                    &lt;u&gt;Latitude:&lt;/u&gt;
+                  &lt;/font&gt;
+                &lt;/td&gt;
+                &lt;td colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;
+                    &lt;u&gt;Longitude:&lt;/u&gt;
+                  &lt;/font&gt;
+                &lt;/td&gt;
+                &lt;td colspan="3" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;
+                    &lt;u&gt;FRD:&lt;/u&gt;
+                  &lt;/font&gt;
+                &lt;/td&gt;
+              &lt;/tr&gt;
+              &lt;TR&gt;
+                &lt;td width="20" /&gt;
+                &lt;td width="140" /&gt;
+                &lt;TD colspan="1" width="300"&gt;
+                  &lt;font face="Arial" size="2"&gt;From: &lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;37&amp;#xBA;00'05"N&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;106&amp;#xBA;56'05"W&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;DRO089040.1&lt;/font&gt;
+                &lt;/TD&gt;
+              &lt;/TR&gt;
+              &lt;TR&gt;
+                &lt;td width="20" /&gt;
+                &lt;td width="140" /&gt;
+                &lt;TD colspan="1" width="300"&gt;
+                  &lt;font face="Arial" size="2"&gt;To: &lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;37&amp;#xBA;00'18"N&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;106&amp;#xBA;56'03"W&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;DRO089040.1&lt;/font&gt;
+                &lt;/TD&gt;
+              &lt;/TR&gt;
+              &lt;TR&gt;
+                &lt;td width="20" /&gt;
+                &lt;td width="140" /&gt;
+                &lt;TD colspan="1" width="300"&gt;
+                  &lt;font face="Arial" size="2"&gt;To: &lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;37&amp;#xBA;10'51"N&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;106&amp;#xBA;56'04"W&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;DRO073039&lt;/font&gt;
+                &lt;/TD&gt;
+              &lt;/TR&gt;
+              &lt;TR&gt;
+                &lt;td width="20" /&gt;
+                &lt;td width="140" /&gt;
+                &lt;TD colspan="1" width="300"&gt;
+                  &lt;font face="Arial" size="2"&gt;To: &lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;37&amp;#xBA;10'55"N&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;107&amp;#xBA;08'55"W&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;DRO072028.8&lt;/font&gt;
+                &lt;/TD&gt;
+              &lt;/TR&gt;
+              &lt;TR&gt;
+                &lt;td width="20" /&gt;
+                &lt;td width="140" /&gt;
+                &lt;TD colspan="1" width="300"&gt;
+                  &lt;font face="Arial" size="2"&gt;To: &lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;37&amp;#xBA;14'15"N&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;107&amp;#xBA;08'55"W&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;DRO066029.2&lt;/font&gt;
+                &lt;/TD&gt;
+              &lt;/TR&gt;
+              &lt;TR&gt;
+                &lt;td width="20" /&gt;
+                &lt;td width="140" /&gt;
+                &lt;TD colspan="1" width="300"&gt;
+                  &lt;font face="Arial" size="2"&gt;To: &lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;37&amp;#xBA;14'15"N&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;107&amp;#xBA;24'40"W&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;DRO059017&lt;/font&gt;
+                &lt;/TD&gt;
+              &lt;/TR&gt;
+              &lt;TR&gt;
+                &lt;td width="20" /&gt;
+                &lt;td width="140" /&gt;
+                &lt;TD colspan="1" width="300"&gt;
+                  &lt;font face="Arial" size="2"&gt;To: &lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;37&amp;#xBA;00'04"N&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;107&amp;#xBA;24'58"W&lt;/font&gt;
+                &lt;/TD&gt;
+                &lt;TD colspan="1" width="200"&gt;
+                  &lt;font face="Arial" size="2"&gt;RSK051036.1&lt;/font&gt;
+                &lt;/TD&gt;
+              &lt;/TR&gt;
+            &lt;/table&gt;
+          &lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+          &lt;td&gt; &lt;/td&gt;
+          &lt;td&gt; &lt;/td&gt;
+          &lt;td colspan="3"&gt;
+            &lt;font face="Arial" size="2"&gt;Altitude: From the surface  up to and including 1000 feet AGL &lt;/font&gt;
+          &lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="5"&gt;
+            &lt;font face="Arial" size="2"&gt;
+              &lt;b&gt;Effective Date(s):&lt;/b&gt;
+            &lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD&gt; &lt;/TD&gt;
+          &lt;TD&gt; &lt;/TD&gt;
+          &lt;TD colspan="5"&gt;
+            &lt;font face="Arial" size="2"&gt;
+              &lt;b&gt;In UTC:&lt;/b&gt;
+            &lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD&gt; &lt;/TD&gt;
+          &lt;TD&gt; &lt;/TD&gt;
+          &lt;TD colspan="5"&gt;
+            &lt;font face="Arial" size="2"&gt;1400 to 2359 UTC Daily starting November 1 and ending November 7.&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="2" height="20"&gt;  &lt;/TD&gt;
+        &lt;/TR&gt;
+      &lt;/Table&gt;
+      &lt;b&gt;ENDSECTION1&lt;/b&gt;
+      &lt;Table cellpadding="1" cellspacing="0"&gt;
+        &lt;TR bgcolor="#1E90FF"&gt;
+          &lt;TD colspan="3"&gt;
+            &lt;a name="restrictions"&gt;
+              &lt;b&gt;
+                &lt;font color="#FFFFFF" face="Arial" size="3"&gt;Operating Restrictions and Requirements&lt;/font&gt;
+              &lt;/b&gt;
+            &lt;/a&gt;
+          &lt;/TD&gt;
+          &lt;TD colspan="1" align="right"&gt;
+            &lt;a href="#"&gt;
+              &lt;font color="#FFFFFF" face="Arial"&gt;
+                &lt;b&gt;Top&lt;/b&gt;
+              &lt;/font&gt;
+            &lt;/a&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="2" height="20"&gt;  &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="3"&gt;
+            &lt;font face="Arial" size="2"&gt;No pilots may operate an aircraft in the areas covered by this NOTAM (except as described).&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="2" height="20"&gt;  &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;
+              &lt;DL&gt;
+                &lt;DT /&gt;&lt;br/&gt;&lt;/DL&gt;
+            &lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="2" height="10"&gt;  &lt;/TD&gt;
+        &lt;/TR&gt;
+      &lt;/Table&gt;
+      &lt;Table cellpadding="1" cellspacing="0"&gt;
+        &lt;TR bgcolor="#1E90FF"&gt;
+          &lt;TD colspan="3"&gt;
+            &lt;a name="other"&gt;
+              &lt;b&gt;
+                &lt;font color="#FFFFFF" face="Arial" size="3"&gt;Other Information:&lt;/font&gt;
+              &lt;/b&gt;
+            &lt;/a&gt;
+          &lt;/TD&gt;
+          &lt;TD colspan="1" align="right"&gt;
+            &lt;a href="#"&gt;
+              &lt;font color="#FFFFFF" face="Arial"&gt;
+                &lt;b&gt;Top&lt;/b&gt;
+              &lt;/font&gt;
+            &lt;/a&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="2"&gt;
+            &lt;font face="Arial" size="2"&gt;ARTCC:&lt;/font&gt;
+          &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;ZDV - Denver Center&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="2"&gt;
+            &lt;font face="Arial" size="2"&gt;Point of Contact:&lt;/font&gt;
+          &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;MEGANCK ,  OR EMAIL CAMERON.MEGANCK@STATE.CO.US ARCHULETA COUNTY FLOOD RESPONSE&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="2"&gt; &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;Telephone 719-252-3457&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="2"&gt; &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;Frequency 126.7&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD colspan="2"&gt;
+            &lt;font face="Arial" size="2"&gt;Authority:&lt;/font&gt;
+          &lt;/TD&gt;
+          &lt;TD&gt;
+            &lt;font face="Arial" size="2"&gt;Title 14 CFR section 91.137(a)(2)&lt;/font&gt;
+          &lt;/TD&gt;
+        &lt;/TR&gt;
+        &lt;TR&gt;
+          &lt;TD Width="40" /&gt;
+          &lt;TD Width="152" /&gt;
+          &lt;TD Width="318" /&gt;
+        &lt;/TR&gt;
+      &lt;/Table&gt;
+    &lt;/Body&gt;
+  &lt;/span&gt;
+&lt;/html&gt;</txtDescrModern>
+        <codeFreeformText>false</codeFreeformText>
+      </Not>
+    </Add>
+  </Group>
+</XNOTAM-Update>

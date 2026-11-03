@@ -95,7 +95,7 @@ public class TfrEngineTest {
     }
 
     /** Serves the fixture set; can drop ids, fail, or serve garbage. */
-    static final class FakeFaa implements FaaClient {
+    static class FakeFaa implements FaaClient {
         byte[] list = Fixtures.list();
         boolean down;
         int listCalls, detailCalls;
@@ -246,42 +246,221 @@ public class TfrEngineTest {
     }
 
     @Test
-    public void emptyListHeldUntilConfirmed() {
+    public void emptyListNeverWipesTheMap() {
         TfrEngine e = engine();
         e.start();
         sched.advance(MIN);
         faa.list = "[]".getBytes(StandardCharsets.UTF_8);
+        sched.advance(6 * 60 * MIN); // six hours of empty answers
+        Snapshot s = last();
+        assertEquals(54, s.items.size());
+        for (Snapshot.Item i : s.items) {
+            assertFalse(i.possiblyCancelled);
+            assertNotNull(i.tfr);
+        }
+        assertTrue(s.problem.contains("came back empty"));
+        assertTrue(s.isStale());
+        assertEquals(54, new File(dir, "details").list().length);
+        // When the real list returns, everything is normal again.
+        faa.list = Fixtures.list();
         sched.advance(10 * MIN);
-        assertEquals(54, last().items.size());
-        assertTrue(last().problem.contains("empty"));
-        // Confirmation polls come quickly (2 min).
-        sched.advance(2 * MIN);
-        assertEquals(54, last().items.size());
-        sched.advance(2 * MIN); // third empty answer: accepted
-        // Accepted empty list: everything flagged, then removed next poll.
-        for (Snapshot.Item i : last().items)
-            assertTrue(i.possiblyCancelled);
-        sched.advance(10 * MIN);
-        assertEquals(0, last().items.size());
+        assertNull(last().problem);
+        assertFalse(last().isStale());
     }
 
     @Test
-    public void bigDropHeldOnce() throws Exception {
+    public void emptyListAcceptedOnAFreshInstall() {
+        faa.list = "[]".getBytes(StandardCharsets.UTF_8);
+        TfrEngine e = engine();
+        e.start();
+        sched.advance(MIN);
+        assertEquals(0, last().items.size());
+        assertNull(last().problem);
+        assertFalse(last().isStale());
+    }
+
+    @Test
+    public void bigDropHeldForThirtyMinutes() throws Exception {
         TfrEngine e = engine();
         e.start();
         sched.advance(MIN);
         faa.firstRows(10);
         sched.advance(10 * MIN);
         assertTrue(last().problem.contains("dropped from 54 to 10"));
+        sched.advance(25 * MIN); // still within 30 min: held
+        assertEquals(54, last().items.size());
         for (Snapshot.Item i : last().items)
             assertFalse(i.possiblyCancelled);
-        sched.advance(2 * MIN);
-        assertNull(last().problem);
+        sched.advance(10 * MIN); // confirmed
         int flagged = 0;
         for (Snapshot.Item i : last().items)
             if (i.possiblyCancelled)
                 flagged++;
         assertEquals(44, flagged);
+        assertNull(last().problem);
+        sched.advance(10 * MIN);
+        assertEquals(10, last().items.size());
+    }
+
+    @Test
+    public void shortDropBlipIsIgnored() throws Exception {
+        TfrEngine e = engine();
+        e.start();
+        sched.advance(MIN);
+        faa.firstRows(10);
+        sched.advance(10 * MIN);
+        faa.list = Fixtures.list();
+        sched.advance(10 * MIN);
+        assertNull(last().problem);
+        for (Snapshot.Item i : last().items)
+            assertFalse(i.possiblyCancelled);
+        assertEquals(54, last().items.size());
+    }
+
+    @Test
+    public void newTfrAlertSurvivesDetailFailure() throws Exception {
+        final int[] fails = { 1 };
+        faa = new FakeFaa() {
+            @Override
+            public byte[] fetchDetail(String id) throws IOException {
+                if (id.equals("6/4199") && fails[0]-- > 0)
+                    throw new FaaClient.HttpStatusException(503);
+                return super.fetchDetail(id);
+            }
+        };
+        faa.without("6/4199");
+        TfrEngine e = engine();
+        e.start();
+        sched.advance(MIN);
+        faa.list = Fixtures.list();
+        sched.advance(10 * MIN); // listed; detail fails (503)
+        Snapshot.Item i = last().find("6/4199");
+        assertNull(i.tfr);
+        // Retried after 2 min, not 10, and alerted with its details.
+        sched.advance(2 * MIN);
+        boolean alerted = false;
+        for (Snapshot s : snaps)
+            if (s.newIds.contains("6/4199")) {
+                assertNotNull(s.find("6/4199").tfr);
+                alerted = true;
+            }
+        assertTrue(alerted);
+        // Only once.
+        int count = 0;
+        snaps.clear();
+        sched.advance(30 * MIN);
+        for (Snapshot s : snaps)
+            if (s.newIds.contains("6/4199"))
+                count++;
+        assertEquals(0, count);
+    }
+
+    @Test
+    public void pendingAlertSurvivesRestart() throws Exception {
+        faa.without("6/4199");
+        TfrEngine e = engine();
+        e.start();
+        sched.advance(MIN);
+        final boolean[] failDetail = { true };
+        FakeFaa failing = new FakeFaa() {
+            @Override
+            public byte[] fetchDetail(String id) throws IOException {
+                if (failDetail[0] && id.equals("6/4199"))
+                    throw new FaaClient.HttpStatusException(500);
+                return super.fetchDetail(id);
+            }
+        };
+        e.stop();
+        long t = sched.now;
+        sched = new ManualScheduler();
+        sched.now = t;
+        faa = failing;
+        TfrEngine e2 = engine();
+        e2.start();
+        sched.advance(11 * MIN); // lists 6/4199 as new; detail fails
+        assertNull(last().find("6/4199").tfr);
+        e2.stop();
+        t = sched.now;
+        sched = new ManualScheduler();
+        sched.now = t + 5 * MIN;
+        failDetail[0] = false;
+        snaps.clear();
+        TfrEngine e3 = engine();
+        e3.start();
+        sched.advance(MIN);
+        boolean alerted = false;
+        for (Snapshot s : snaps)
+            if (s.newIds.contains("6/4199"))
+                alerted = true;
+        assertTrue(alerted);
+    }
+
+    @Test
+    public void removedTfrLeavesNoFiles() throws Exception {
+        TfrEngine e = engine();
+        e.start();
+        sched.advance(3 * 60 * MIN); // hourly refreshes create .bak files
+        faa.without("6/4199");
+        sched.advance(25 * MIN);
+        assertNull(last().find("6/4199"));
+        for (String n : new File(dir, "details").list())
+            assertFalse(n, n.contains("6_4199"));
+    }
+
+    @Test
+    public void stopDuringPollStopsEverything() throws Exception {
+        final TfrEngine[] ref = new TfrEngine[1];
+        faa = new FakeFaa() {
+            @Override
+            public byte[] fetchDetail(String id) throws IOException {
+                if (detailCalls == 5)
+                    ref[0].stop();
+                return super.fetchDetail(id);
+            }
+        };
+        TfrEngine e = engine();
+        ref[0] = e;
+        e.start();
+        sched.advance(MIN);
+        assertEquals(6, faa.detailCalls); // the one in flight, then nothing
+        String[] files = new File(dir, "details").list();
+        assertTrue(files == null || files.length <= 5);
+        int snapsAtStop = snaps.size();
+        sched.advance(60 * MIN);
+        assertEquals(6, faa.detailCalls);
+        assertEquals(snapsAtStop, snaps.size());
+    }
+
+    @Test
+    public void startupSweepsOrphanFiles() throws Exception {
+        TfrEngine e = engine();
+        e.start();
+        sched.advance(MIN);
+        e.stop();
+        File d = new File(dir, "details");
+        for (String n : new String[] { "detail_1_0001.xml", "detail_1_0001.xml.bak",
+                "detail_6_4199.xml.tmp" })
+            new FileOutputStream(new File(d, n)).close();
+        for (int i = 0; i < 8; i++)
+            new FileOutputStream(new File(d, "detail_x.xml.corrupt-" + (1000 + i))).close();
+        sched = new ManualScheduler();
+        faa = new FakeFaa();
+        faa.down = true;
+        TfrEngine e2 = engine();
+        e2.start();
+        sched.advance(1000);
+        List<String> left = e2.cacheFiles();
+        assertFalse(left.toString(), left.contains("details/detail_1_0001.xml"));
+        assertFalse(left.contains("details/detail_1_0001.xml.bak"));
+        assertFalse(left.contains("details/detail_6_4199.xml.tmp"));
+        assertTrue(left.contains("details/detail_6_4199.xml"));
+        int corrupt = 0;
+        for (String n : left)
+            if (n.contains(".corrupt-"))
+                corrupt++;
+        assertEquals(5, corrupt);
+        assertFalse(left.contains("details/detail_x.xml.corrupt-1000"));
+        assertTrue(left.contains("details/detail_x.xml.corrupt-1007"));
     }
 
     @Test

@@ -55,11 +55,13 @@ public final class MapPlan {
             this.title = title;
         }
 
-        /** Changes when anything drawn changes. */
+        /** Changes when anything drawn changes (every point counts). */
         public String signature() {
-            LatLon a = outline.get(0), b = outline.get(outline.size() / 2);
-            return outline.size() + "|" + a + "|" + b + "|" + stroke + "|"
-                    + fill + "|" + line + "|" + heightM + "|" + label;
+            long h = 17;
+            for (LatLon p : outline)
+                h = h * 31 + p.hashCode();
+            return outline.size() + "|" + h + "|" + stroke + "|" + fill + "|"
+                    + line + "|" + heightM + "|" + label + "|" + title;
         }
     }
 

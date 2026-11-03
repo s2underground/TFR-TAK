@@ -68,7 +68,10 @@ public final class TfrListParser {
             throw new FeedException("empty response");
         if (json.length > MAX_BYTES)
             throw new FeedException("response too large");
-        String s = new String(json, StandardCharsets.UTF_8).trim();
+        String s = new String(json, StandardCharsets.UTF_8);
+        if (s.startsWith("\uFEFF")) // byte-order mark
+            s = s.substring(1);
+        s = s.trim();
         if (!s.startsWith("["))
             throw new FeedException("not a TFR list");
         JSONArray arr;

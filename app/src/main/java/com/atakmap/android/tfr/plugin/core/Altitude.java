@@ -49,8 +49,9 @@ public final class Altitude {
         return new Altitude(Ref.UNKNOWN, v);
     }
 
+    /** 0 ft AGL, or 0 ft MSL (how some FAA files encode "SFC", e.g. 6/4857). */
     public boolean isSurface() {
-        return ref == Ref.AGL && value == 0;
+        return (ref == Ref.AGL || ref == Ref.MSL) && value == 0;
     }
 
     /**
@@ -77,7 +78,8 @@ public final class Altitude {
                 return value == 0 ? "SFC"
                         : String.format(Locale.US, "%,d ft AGL", value);
             case MSL:
-                return String.format(Locale.US, "%,d ft MSL", value);
+                return value == 0 ? "SFC"
+                        : String.format(Locale.US, "%,d ft MSL", value);
             case FL:
                 return String.format(Locale.US, "FL%03d", value);
             default:

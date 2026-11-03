@@ -65,17 +65,23 @@ Detail: `GET https://tfr.faa.gov/download/detail_6_4199.xml`, root
 |---|---|
 | List unreachable / HTTP error | Keep everything; "Can't reach tfr.faa.gov"; retry 1, 2, 5 min |
 | List not a JSON array (HTML error page, truncated) | Same: never treated as "no TFRs" |
-| List empty while ≥3 were listed | Held; accepted after 3 empty answers in a row (2 min apart) |
-| List drops below half of ≥10 | Held once; accepted when the next poll agrees |
+| List empty while ≥3 TFRs are held | Never accepted (nationwide SSIs are always listed): previous picture kept, problem shown, STALE after 30 min |
+| List drops below half of ≥10 | Held until the drop has persisted 30 min (checked every 5 min) |
 | TFR missing from one accepted list | Shown dotted, "possibly cancelled"; removed if missing again |
 | Detail unreachable mid-poll | Stop, retry soon; keep last copies |
-| Detail HTTP 404 / unreadable | Keep the last good copy, flagged; new TFR listed with list data only |
+| Detail HTTP 404 / unreadable | Keep the last good copy, flagged; new TFR listed with list data only; retried every 2 min (5 times) |
+| New TFR whose detail fails | Its alert waits (persisted) until the detail is read, up to 24 h |
 | Detail for a different NOTAM / DOCTYPE / malformed | Refused |
-| Schedule part unreadable | Area treated as active for its whole period, flagged |
+| Schedule part unreadable | NOTAM's overall period added; area active from first start to last end, flagged |
+| Day-of-week windows | Count on the UTC day or the local day (NOTAM zone); unknown zone + days = uncertain |
+| Multi-area TFR active | "Active until" = when the last active area (chained) ends |
 | Outline definition unusable or disagrees with FAA graphic | FAA graphic shown, flagged |
 | No outline at all | Listed as text-only, never guessed |
 | Restart without signal | Last FAA files re-parsed from the device cache; states computed from published times |
-| Cache file unreadable | Moved aside as `.corrupt-<time>`, start fresh |
+| Cache file unreadable | Moved aside as `.corrupt-<time>`, start fresh; newest 5 kept |
+| Orphan cache files | Swept at start (details of removed TFRs, `.bak`, `.tmp`) |
+| Plugin stopped mid-poll | No further requests, writes or snapshots |
+| Regulation code unknown | Category from the list's type word |
 | Data older than 30 min | STALE warning |
 
 Polling: list every 10 min; details for new or changed rows immediately,

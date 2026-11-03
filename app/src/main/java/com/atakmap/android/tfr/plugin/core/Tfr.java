@@ -87,8 +87,39 @@ public final class Tfr {
         return Schedule.State.EXPIRED;
     }
 
-    /** Next state change of any area after t; -1 if none. */
+    /**
+     * When the TFR's overall state next changes; -1 if never.
+     * Active: when the last of its areas stops being active (following
+     * areas whose active time overlaps or touches), so a TFR is never said
+     * to end while any area is still in effect. Otherwise: the earliest
+     * time any area becomes active.
+     */
     public long nextChange(long t) {
+        if (areas.isEmpty()) {
+            if (t < effectiveMs)
+                return effectiveMs;
+            return t < expireMs && expireMs != Schedule.FOREVER ? expireMs : -1;
+        }
+        if (stateAt(t) == Schedule.State.ACTIVE) {
+            long end = t;
+            for (int guard = 0; guard < 256; guard++) {
+                long next = end;
+                boolean any = false;
+                for (TfrArea a : areas) {
+                    if (a.schedule.stateAt(end) != Schedule.State.ACTIVE)
+                        continue;
+                    any = true;
+                    long e = a.schedule.nextChange(end);
+                    if (e < 0)
+                        return -1; // an active area has no published end
+                    next = Math.max(next, e);
+                }
+                if (!any || next <= end)
+                    break;
+                end = next;
+            }
+            return end;
+        }
         long best = -1;
         for (TfrArea a : areas) {
             long c = a.schedule.nextChange(t);

@@ -64,6 +64,11 @@ See docs/DESIGN.md for details and the FAA file format notes.
 _________________________________________________________________
 STATUS
 
+0.3 (Nov 2026): pre-release audit (docs/AUDIT.md). Multi-area TFRs
+show the right end time; an unreadable schedule part can no longer make a
+TFR look ended; an empty FAA list can never wipe the map; alerts survive
+a failed detail download; clean stop; cache cleanup; XML parsing
+hardened; user manual. 75 unit tests on two days of real FAA data.
 0.2 (Nov 2026): "Show TFRs on map" switch (removes every TFR shape;
 the list, updates and nearby alerts keep running); the pane is split into
 boxes: Active now, Upcoming (soonest first), Text-only (collapsed) and
