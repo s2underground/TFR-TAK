@@ -24,7 +24,9 @@ import java.util.Set;
  * editable; they are redrawn from the cache when ATAK starts. Only shapes
  * whose signature changed are touched. The group is registered with ATAK's
  * Overlay Manager (a plain group added to the root is not listed there).
- * Main thread only.
+ * Labels are drawn by {@link LabelLayer} (x-ray, so a TFR's own 3D box
+ * can't hide them); if ATAK's label manager can't be reached, the
+ * polylines' own center labels are used instead. Main thread only.
  */
 public final class MapLayer {
 
@@ -39,6 +41,41 @@ public final class MapLayer {
     private MapGroup group;
     private DefaultMapGroupOverlay overlay;
     private final Map<String, String> drawn = new HashMap<>();
+    private LabelLayer labels;
+    /** The pane's "Show labels" switch. */
+    private boolean labelsOn = true;
+    private boolean labelsChecked;
+    private final MapItem.OnVisibleChangedListener visListener = new MapItem.OnVisibleChangedListener() {
+        @Override
+        public void onVisibleChanged(MapItem item) {
+            mapView.post(new Runnable() {
+                @Override
+                public void run() {
+                    refreshLabels();
+                }
+            });
+        }
+    };
+    private final MapGroup.OnVisibleChangedListener groupVisListener = new MapGroup.OnVisibleChangedListener() {
+        @Override
+        public void onGroupVisibleChanged(MapGroup g) {
+            mapView.post(new Runnable() {
+                @Override
+                public void run() {
+                    refreshLabels();
+                }
+            });
+        }
+    };
+    private final LabelLayer.Visibility visibility = new LabelLayer.Visibility() {
+        @Override
+        public boolean isShown(String shapeUid) {
+            if (!labelsOn || group == null || !group.getVisible())
+                return false;
+            MapItem it = group.deepFindUID(shapeUid);
+            return it != null && it.getVisible();
+        }
+    };
 
     public MapLayer(MapView mapView, String iconUri) {
         this.mapView = mapView;
@@ -55,6 +92,7 @@ public final class MapLayer {
                 group = new DefaultMapGroup(GROUP_NAME);
                 mapView.getRootGroup().addGroup(group);
             }
+            group.addOnVisibleChangedListener(groupVisListener);
             MapGroup old = mapView.getRootGroup().findMapGroup(OLD_GROUP_NAME);
             if (old != null) {
                 old.clearItems();
@@ -73,6 +111,13 @@ public final class MapLayer {
 
     public void apply(List<MapPlan.Shape> plan) {
         MapGroup g = group();
+        if (!labelsChecked) {
+            labelsChecked = true;
+            labels = LabelLayer.create(mapView);
+        }
+        final double minPixels = labels != null ? labels.minPixels()
+                : MapPlan.LABEL_MIN_DP
+                        * mapView.getResources().getDisplayMetrics().density;
         Set<String> wanted = new HashSet<>();
         for (MapPlan.Shape s : plan) {
             wanted.add(s.uid);
@@ -83,10 +128,12 @@ public final class MapLayer {
                 continue;
             try {
                 if (existing instanceof Polyline && existing.getGroup() != null)
-                    style((Polyline) existing, s);
+                    style((Polyline) existing, s, labels == null && labelsOn,
+                            minPixels);
                 else {
                     Polyline p = new Polyline(s.uid);
-                    style(p, s);
+                    style(p, s, labels == null && labelsOn, minPixels);
+                    p.addOnVisibleChangedListener(visListener);
                     // Hidden from Overlay Manager: new TFRs stay hidden too.
                     p.setVisible(g.getVisible());
                     g.addItem(p);
@@ -100,13 +147,23 @@ public final class MapLayer {
             if (wanted.contains(uid))
                 continue;
             MapItem it = g.deepFindUID(uid);
-            if (it != null)
+            if (it != null) {
+                it.removeOnVisibleChangedListener(visListener);
                 it.removeFromGroup();
+            }
             drawn.remove(uid);
         }
+        if (labels != null)
+            labels.apply(MapPlan.labels(plan), visibility);
     }
 
-    private static void style(Polyline p, MapPlan.Shape s) {
+    private void refreshLabels() {
+        if (labels != null && group != null)
+            labels.refresh(visibility);
+    }
+
+    private static void style(Polyline p, MapPlan.Shape s,
+            boolean shapeLabels, double minPixels) {
         List<LatLon> o = s.outline;
         GeoPoint[] pts = new GeoPoint[o.size()];
         for (int i = 0; i < pts.length; i++)
@@ -124,8 +181,23 @@ public final class MapLayer {
         if (!Double.isNaN(s.heightM))
             p.setHeight(s.heightM);
         p.setTitle(s.title);
-        p.setMetaString("centerPointLabel", s.label);
-        p.setMaxLabelRenderResolution(s.labelMaxResM);
+        if (shapeLabels) {
+            // Fallback only (LabelLayer is the normal path). ATAK's polyline
+            // renderer shows the center label between tile levels
+            // max(minLabelRenderResolution, res(minRenderScale)) (coarse)
+            // and maxLabelRenderResolution (fine; 0 = all the way in).
+            // The coarse limit is the exact resolution of the label's level
+            // (a hair finer, so ATAK's rounding lands on that level).
+            double coarse = MapPlan.levelResolution(MapPlan.labelLevel(
+                    s.extentM, minPixels)) * 0.999;
+            p.setMetaString("centerPointLabel", s.label);
+            p.setMinLabelRenderResolution(coarse);
+            p.setMaxLabelRenderResolution(0.0);
+            // Legacy renderer: shown while map scale >= this (96 dpi).
+            p.setMetaDouble("minRenderScale", 0.0254 / (96.0 * coarse));
+        } else {
+            p.removeMetaData("centerPointLabel");
+        }
         p.setMetaString("tfrtak.id", s.tfrId);
         p.setClickable(true);
         p.setEditable(false);
@@ -138,11 +210,31 @@ public final class MapLayer {
         p.setMetaBoolean("removable", false);
     }
 
+    /**
+     * The "Show labels" switch: hides or shows every TFR label, shapes
+     * unchanged. Takes effect at once for our own labels; the fallback
+     * shape labels are restyled on the next {@link #apply}.
+     */
+    public void setLabelsVisible(boolean on) {
+        if (labelsOn == on)
+            return;
+        labelsOn = on;
+        if (labels == null)
+            drawn.clear(); // fallback: restyle the shapes on the next apply
+        refreshLabels();
+    }
+
     public void setVisible(boolean v) {
         group().setVisible(v);
+        refreshLabels();
     }
 
     public void dispose() {
+        if (labels != null) {
+            labels.dispose();
+            labels = null;
+        }
+        labelsChecked = false;
         if (overlay != null) {
             try {
                 mapView.getMapOverlayManager().removeOverlay(overlay);
@@ -152,6 +244,7 @@ public final class MapLayer {
             overlay = null;
         }
         if (group != null) {
+            group.removeOnVisibleChangedListener(groupVisListener);
             group.clearItems();
             try {
                 mapView.getRootGroup().removeGroup(group);

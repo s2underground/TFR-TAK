@@ -36,6 +36,9 @@ public final class TfrPane {
         /** Show or remove every TFR shape on the map. */
         void setMapVisible(boolean on);
 
+        /** Show or hide the TFR labels (shapes stay). */
+        void setLabelsVisible(boolean on);
+
         boolean isCollapsed(Rows.Box box);
 
         void setCollapsed(Rows.Box box, boolean collapsed);
@@ -62,7 +65,7 @@ public final class TfrPane {
     private final LinearLayout listPage, detailPage;
     private final TextView status, warning, counts, detailText;
     private final LinearLayout rowsBox;
-    private final CheckBox mapVisible, securityOnly, showEnded;
+    private final CheckBox mapVisible, labelsVisible, securityOnly, showEnded;
     private final Button goToBtn;
 
     private Snapshot snap;
@@ -70,7 +73,7 @@ public final class TfrPane {
     private String lastRowsSig = null;
 
     public TfrPane(Context pluginContext, Actions actions, boolean onMap,
-            boolean secOnly, boolean ended) {
+            boolean labels, boolean secOnly, boolean ended) {
         this.ctx = pluginContext;
         this.actions = actions;
         root = new ScrollView(ctx);
@@ -95,9 +98,20 @@ public final class TfrPane {
             @Override
             public void onCheckedChanged(CompoundButton b, boolean on) {
                 TfrPane.this.actions.setMapVisible(on);
+                labelsVisible.setEnabled(on);
             }
         });
         listPage.addView(mapVisible);
+        // For clean screenshots: shapes without their labels.
+        labelsVisible = check("Show labels", labels);
+        labelsVisible.setEnabled(onMap);
+        labelsVisible.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton b, boolean on) {
+                TfrPane.this.actions.setLabelsVisible(on);
+            }
+        });
+        listPage.addView(labelsVisible);
 
         LinearLayout bar = new LinearLayout(ctx);
         bar.setOrientation(LinearLayout.HORIZONTAL);

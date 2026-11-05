@@ -77,16 +77,55 @@ public class PresentationTest {
 
     /** Device test 0.3: labels must show at zooms where the TFR is visible. */
     @Test
-    public void labelThresholdScalesWithAreaSize() throws Exception {
+    public void labelZoomIsExactAndFitsShowOnMap() throws Exception {
         List<MapPlan.Shape> plan = MapPlan.build(snapshot("2026-11-02T15:00"), false);
-        MapPlan.Shape vip = shape(plan, "6/4199"); // 5 NM circle, ~13 km bbox diagonal
-        double ext = com.atakmap.android.tfr.plugin.core.Boundary.extent(vip.outline);
-        assertEquals(ext / MapPlan.LABEL_MIN_PIXELS, vip.labelMaxResM, 1e-6);
-        assertTrue(vip.labelMaxResM > 50); // far coarser than ATAK's 10 m/px default
+        // A high-density tablet (2 px per dp), as on the dev device.
+        double px = MapPlan.LABEL_MIN_DP * 2.0;
+        for (MapPlan.Label l : MapPlan.labels(plan)) {
+            int level = l.level(px);
+            double res = MapPlan.levelResolution(level);
+            // ATAK shows the label from this level on (res and finer):
+            // never before the area spans the minimum ...
+            assertTrue(l.uid, l.extentM / res >= px - 1e-6);
+            // ... and always once it spans twice that (320 dp), well under
+            // what "Show on map" (fit to the whole map view) gives.
+            assertTrue(l.uid, l.extentM / res < 2 * px);
+        }
+        // The 1.0.1 test build labelled a 5 NM VIP at ~40 dp across.
+        MapPlan.Shape vip = shape(plan, "6/4199");
+        assertTrue(vip.extentM / MapPlan.levelResolution(
+                MapPlan.labelLevel(vip.extentM, px)) >= px);
+        assertEquals(30, MapPlan.labelLevel(0, px));
+    }
+
+    @Test
+    public void nestedDcRingsShareOneLabel() throws Exception {
+        List<MapPlan.Shape> plan = MapPlan.build(snapshot("2026-11-02T15:00"), false);
+        List<MapPlan.Shape> dc = new ArrayList<>();
         for (MapPlan.Shape s : plan)
-            assertTrue(s.uid, s.labelMaxResM >= 10.0);
-        // Part of the signature, so a change reaches the map.
-        assertTrue(vip.signature().endsWith("|" + vip.labelMaxResM));
+            if (s.tfrId.equals("4/9383"))
+                dc.add(s);
+        assertEquals(2, dc.size()); // 30 NM ring and "Area B" inside it
+        List<MapPlan.Label> labels = new ArrayList<>();
+        for (MapPlan.Label l : MapPlan.labels(plan))
+            if (l.shapeUids.contains(dc.get(0).uid)
+                    || l.shapeUids.contains(dc.get(1).uid))
+                labels.add(l);
+        assertEquals(1, labels.size());
+        MapPlan.Label l = labels.get(0);
+        assertEquals(2, l.shapeUids.size());
+        MapPlan.Shape ring = dc.get(0).extentM > dc.get(1).extentM ? dc.get(0)
+                : dc.get(1);
+        assertEquals(ring.center, l.anchor);
+        assertEquals(ring.extentM, l.extentM, 0);
+        // Same altitudes and state: one line, as for a single area.
+        assertEquals(ring.label, l.text);
+        assertTrue(l.text, l.text.contains("17,999 ft MSL"));
+        // Every other drawn area still has its own label.
+        int others = 0;
+        for (MapPlan.Label x : MapPlan.labels(plan))
+            others += x.shapeUids.size();
+        assertEquals(plan.size(), others);
     }
 
     @Test

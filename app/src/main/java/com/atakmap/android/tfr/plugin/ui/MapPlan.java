@@ -25,8 +25,15 @@ import java.util.List;
 public final class MapPlan {
 
     public static final String UID_PREFIX = "tfrtak-";
-    /** Labels appear once an area spans about this many pixels. */
-    public static final double LABEL_MIN_PIXELS = 150.0;
+    /**
+     * A label appears once its area spans at least this many dp on screen
+     * (between 1x and 2x this, since ATAK switches labels per whole tile
+     * level). About the width of a label, so a label is never much wider
+     * than the area it names, and still shown at the "Show on map" zoom.
+     */
+    public static final double LABEL_MIN_DP = 160.0;
+    /** Map resolution of tile level 0 at the equator (m/pixel), as ATAK. */
+    public static final double LEVEL0_RES = 156543.034;
 
     public enum Line {
         SOLID, DASHED, DOTTED
@@ -35,36 +42,41 @@ public final class MapPlan {
     public static final class Shape {
         public final String uid;
         public final String tfrId;
+        /** The area's name as published ("Area B"); may be empty. */
+        public final String areaName;
         public final List<LatLon> outline;
         public final int stroke;
         public final int fill;
         public final Line line;
         /** Extrusion height above ground in metres; NaN = flat. */
         public final double heightM;
+        /** One-area label: "Security · SFC–17,999 ft MSL · ACTIVE". */
         public final String label;
+        final String head, range, state;
         public final String title;
-        /**
-         * Coarsest map resolution (m/pixel) at which the label is drawn.
-         * ATAK's default is 10 m/px (street level), which hides TFR labels
-         * at any zoom where the TFR is visible; we show it once the area is
-         * about {@link #LABEL_MIN_PIXELS} pixels across.
-         */
-        public final double labelMaxResM;
+        /** Bounding-box diagonal in metres (what the label zoom uses). */
+        public final double extentM;
+        /** Center of the bounding box, where ATAK would put the label. */
+        public final LatLon center;
 
-        Shape(String uid, String tfrId, List<LatLon> outline, int stroke,
-                int fill, Line line, double heightM, String label,
-                String title) {
+        Shape(String uid, String tfrId, String areaName, List<LatLon> outline,
+                int stroke, int fill, Line line, double heightM, String head,
+                String range, String state, String title) {
             this.uid = uid;
             this.tfrId = tfrId;
+            this.areaName = areaName;
             this.outline = outline;
             this.stroke = stroke;
             this.fill = fill;
             this.line = line;
             this.heightM = heightM;
-            this.label = label;
+            this.head = head;
+            this.range = range;
+            this.state = state;
+            this.label = head + " · " + range + " · " + state;
             this.title = title;
-            this.labelMaxResM = Math.max(10.0,
-                    Boundary.extent(outline) / LABEL_MIN_PIXELS);
+            this.extentM = Boundary.extent(outline);
+            this.center = center(outline);
         }
 
         /** Changes when anything drawn changes (every point counts). */
@@ -73,9 +85,78 @@ public final class MapPlan {
             for (LatLon p : outline)
                 h = h * 31 + p.hashCode();
             return outline.size() + "|" + h + "|" + stroke + "|" + fill + "|"
-                    + line + "|" + heightM + "|" + label + "|" + title + "|"
-                    + labelMaxResM;
+                    + line + "|" + heightM + "|" + label + "|" + title;
         }
+    }
+
+    /**
+     * One map label. Areas of the same TFR that lie inside one another
+     * (the Washington DC rings) share one label: separate labels would sit
+     * on top of each other.
+     *
+     * <p>Drawn by atak/MapLayer through ATAK's label manager rather than as
+     * the polylines' own center labels, because ATAK depth-tests labels in
+     * tilted 3D views and a TFR's extruded box hides a label on the ground
+     * inside it (ATAK 5.5 GLLabelManager / GLBatchGeometryRenderer4). Ours
+     * are drawn "x-ray", like markers behind terrain.
+     */
+    public static final class Label {
+        public final String uid;
+        public final String text;
+        public final LatLon anchor;
+        public final double extentM;
+        /** The shapes this label names; it is shown while any of them is. */
+        public final List<String> shapeUids;
+
+        Label(String uid, String text, LatLon anchor, double extentM,
+                List<String> shapeUids) {
+            this.uid = uid;
+            this.text = text;
+            this.anchor = anchor;
+            this.extentM = extentM;
+            this.shapeUids = Collections.unmodifiableList(shapeUids);
+        }
+
+        /**
+         * ATAK tile level from which the label is shown (and at every closer
+         * zoom). ATAK compares whole levels: level = floor(log2(LEVEL0_RES /
+         * resolution)). Taking the ceiling here means the label shows only
+         * once the area really spans {@code minPixels} (up to 2x that).
+         */
+        public int level(double minPixels) {
+            return labelLevel(extentM, minPixels);
+        }
+
+        public String signature() {
+            return text + "|" + anchor.lat + "|" + anchor.lon + "|" + extentM
+                    + "|" + shapeUids;
+        }
+    }
+
+    /** See {@link Label#level}. Clamped to ATAK's 0..30. */
+    public static int labelLevel(double extentM, double minPixels) {
+        if (!(extentM > 0) || !(minPixels > 0))
+            return 30;
+        double needed = extentM / minPixels; // finest resolution allowed
+        double l = Math.log(LEVEL0_RES / needed) / Math.log(2);
+        int level = (int) Math.ceil(l - 1e-9);
+        return Math.max(0, Math.min(30, level));
+    }
+
+    /** Resolution (m/pixel) of a tile level, as ATAK computes it. */
+    public static double levelResolution(int level) {
+        return LEVEL0_RES / Math.pow(2, level);
+    }
+
+    static LatLon center(List<LatLon> ring) {
+        double lat0 = 90, lat1 = -90, lon0 = 180, lon1 = -180;
+        for (LatLon p : ring) {
+            lat0 = Math.min(lat0, p.lat);
+            lat1 = Math.max(lat1, p.lat);
+            lon0 = Math.min(lon0, p.lon);
+            lon1 = Math.max(lon1, p.lon);
+        }
+        return new LatLon((lat0 + lat1) / 2, (lon0 + lon1) / 2);
     }
 
     private MapPlan() {
@@ -113,17 +194,86 @@ public final class MapPlan {
                         : active ? "ACTIVE"
                                 : st == Schedule.State.PENDING ? "not yet active"
                                         : "not active now";
-                String label = t.category.label + " · " + range + " · "
-                        + state;
                 String title = "TFR " + t.id + " " + t.category.label
                         + (t.areas.size() > 1 && !a.name.isEmpty()
                                 ? " " + a.name : "");
                 out.add(new Shape(UID_PREFIX + NotamId.fileKey(t.id) + "-" + i,
-                        t.id, a.outline, t.category.color, fill, line, h, label,
-                        title));
+                        t.id, a.name, a.outline, t.category.color, fill, line,
+                        h, t.category.label, range, state, title));
             }
         }
         return Collections.unmodifiableList(out);
+    }
+
+    /**
+     * The labels for a plan: one per area, except that areas of one TFR
+     * lying inside one another share a label at the largest one's center.
+     * If the merged areas differ in altitudes or state, the label lists
+     * each ("Area B: SFC–3,000 ft AGL · ACTIVE").
+     */
+    public static List<Label> labels(List<Shape> plan) {
+        List<Label> out = new ArrayList<>();
+        int n = plan.size();
+        int[] group = new int[n];
+        for (int i = 0; i < n; i++)
+            group[i] = i;
+        for (int i = 0; i < n; i++)
+            for (int j = i + 1; j < n; j++) {
+                Shape a = plan.get(i), b = plan.get(j);
+                if (!a.tfrId.equals(b.tfrId))
+                    continue;
+                if (Boundary.contains(a.outline, b.center)
+                        || Boundary.contains(b.outline, a.center))
+                    union(group, i, j);
+            }
+        for (int i = 0; i < n; i++) {
+            if (find(group, i) != i)
+                continue;
+            List<Shape> members = new ArrayList<>();
+            for (int j = 0; j < n; j++)
+                if (find(group, j) == i)
+                    members.add(plan.get(j));
+            Shape big = members.get(0);
+            for (Shape m : members)
+                if (m.extentM > big.extentM)
+                    big = m;
+            List<String> uids = new ArrayList<>();
+            boolean same = true;
+            for (Shape m : members) {
+                uids.add(m.uid);
+                same &= m.range.equals(big.range) && m.state.equals(big.state);
+            }
+            String text;
+            if (same)
+                text = big.label;
+            else {
+                StringBuilder b = new StringBuilder(big.head);
+                int k = 0;
+                for (Shape m : members) {
+                    k++;
+                    String name = m.areaName.trim().isEmpty() ? "Area " + k
+                            : m.areaName.trim();
+                    b.append('\n').append(name).append(": ").append(m.range)
+                            .append(" · ").append(m.state);
+                }
+                text = b.toString();
+            }
+            out.add(new Label(big.uid + "-label", text, big.center,
+                    big.extentM, uids));
+        }
+        return Collections.unmodifiableList(out);
+    }
+
+    private static int find(int[] g, int i) {
+        while (g[i] != i)
+            i = g[i] = g[g[i]];
+        return i;
+    }
+
+    private static void union(int[] g, int a, int b) {
+        int ra = find(g, a), rb = find(g, b);
+        if (ra != rb)
+            g[Math.max(ra, rb)] = Math.min(ra, rb);
     }
 
     /** The NOTAM id of a map item uid we created; null if not ours. */

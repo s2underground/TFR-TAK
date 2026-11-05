@@ -92,7 +92,33 @@ others re-read hourly (≤15 per poll), 250 ms apart.
 
 `Polyline` per area, uid `tfrtak-<n>_<nnnn>-<area#>`; closed, filled,
 stroke 3; height = ceiling in feet (MSL and FL taken as height above
-ground: only ever overstates the drawn height); `centerPointLabel` text, shown once the area is ~150 px across
-(`maxLabelRenderResolution` = extent / 150, ATAK's default 10 m/px hides it);
+ground: only ever overstates the drawn height);
 `ignoreMenu` (tap opens our detail view); `archive=false`,
 `nevercot=true` (never saved by ATAK or sent to others).
+
+## Labels (1.0.1)
+
+Drawn by `atak/LabelLayer` straight through ATAK's map label manager
+(`GLMapView.getLabelManager()`, the one ATAK's own labels use), not as
+the polylines' `centerPointLabel`:
+
+- **X-ray.** In a tilted 3D view ATAK depth-tests labels
+  (`GLLabelManager::draw`) and extruded polygons write depth
+  (`GLBatchGeometryRenderer4::drawSprites`), so a ground label inside a
+  TFR's box is hidden by its walls and roof. `HINT_XRAY` draws the hidden
+  part at 40% opacity, as for markers behind terrain. Flat view: no change.
+- **One label per group of nested areas.** Areas of one TFR whose centers
+  fall inside each other (the DC 30 NM ring and Area B) share one label at
+  the largest area's bounding-box center; one line if altitudes and state
+  match, else a line per area.
+- **Zoom.** Shown from the coarsest ATAK tile level at which the area
+  spans `LABEL_MIN_DP` (160 dp x screen density) and at every closer zoom.
+  ATAK compares whole levels, floor(log2(156543.034 / m per px)); the level
+  is rounded up so the label never appears before the area spans 160 dp
+  (it appears between 160 and 320 dp; "Show on map" fits the whole view).
+- Shown while any of its shapes is shown (map switch, Overlay Manager)
+  and the pane's "Show labels" switch (pref `tfrtak.labelsVisible`) is on;
+  not hit-testable, so a tap reaches the shape. Removed on stop.
+- Fallback if the label manager can't be reached: the polylines'
+  `centerPointLabel` with the same level (`minLabelRenderResolution` and
+  `minRenderScale` = coarse limit, `maxLabelRenderResolution` = 0).

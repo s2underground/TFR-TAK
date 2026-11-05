@@ -76,7 +76,7 @@ Remaining, accepted, expected from Fortify too:
 
 ## Not covered by automated tests (device checklist)
 
-- Labels (`centerPointLabel`) visible; tap opens details without ATAK's
+- Labels visible (flat and tilted 3D, incl. the DC rings); tap opens details without ATAK's
   shape menu; 3D extrusion (FL430 areas ≈ 13 km); "TFR-TAK" in
   Overlay Manager; Show on map zoom; notification; map switch; box states.
 - Offline restart: airplane mode, restart ATAK, TFRs return with the
@@ -98,6 +98,32 @@ Failed, fixed in 0.4:
   renamed "TFR-TAK"; icon passed as base64:// (URL_SAFE|NO_WRAP, the flags
   `ATAKUtilities.setIcon` decodes with). New shapes inherit the group's
   visibility, so hiding it in Overlay Manager also hides TFRs posted later.
+
+## Field reports after 1.0 (Nov 5, 2026) — fixed in 1.0.1
+
+1. Labels appeared at globe zoom and never when zoomed in. The 0.4 fix
+   set only `maxLabelRenderResolution`; ATAK's feature renderer reads it as
+   the **fine** limit and takes the coarse limit from
+   `minLabelRenderResolution` / `minRenderScale`, so large TFRs got crossed
+   limits.
+2. First 1.0.1 test build: a small upcoming VIP TFR (6/5767, 5 NM) was
+   labelled when zoomed far out, and the permanent Washington DC TFR
+   (4/9383: a 30 NM ring with "Area B" inside it, SFC–17,999 ft MSL)
+   showed no label at any zoom. Causes, from the ATAK 5.5.1 engine source:
+   - ATAK compares labels against whole tile levels, rounding the limit
+     down (up to 2x coarser), and counts physical pixels: on the tablet
+     the "150 px" rule meant about 40 dp.
+   - In a tilted 3D view ATAK depth-tests labels, and extruded shapes write
+     depth: a label on the ground inside a TFR's box is hidden by the box.
+     The DC rings are tall and nested, so their labels were always inside
+     a box.
+
+   Fix: labels drawn by `atak/LabelLayer` through ATAK's label manager
+   with the x-ray hint; nested areas of one TFR share one label; the zoom
+   limit is the level at which the area spans 160 dp on that screen,
+   rounded so it can't come early. Tests:
+   `PresentationTest.labelZoomIsExactAndFitsShowOnMap`,
+   `nestedDcRingsShareOneLabel`, `ui/MapPlanLabelTest`.
 
 ## Known limits (by design, stated in the manual)
 

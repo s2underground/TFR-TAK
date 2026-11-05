@@ -60,6 +60,7 @@ public final class TfrPlugin implements IPlugin {
     static final String PREF_SECURITY_ONLY = "tfrtak.securityOnly";
     static final String PREF_SHOW_ENDED = "tfrtak.showEnded";
     static final String PREF_MAP_VISIBLE = "tfrtak.mapVisible";
+    static final String PREF_LABELS_VISIBLE = "tfrtak.labelsVisible";
     static final String PREF_COLLAPSED = "tfrtak.collapsed.";
     static final String PREF_ALERT_NM = "tfrtak.alertNm";
     static final int DEFAULT_ALERT_NM = 50;
@@ -78,7 +79,7 @@ public final class TfrPlugin implements IPlugin {
     private MapEventDispatcher.MapEventDispatchListener clickListener;
     private final Handler main = new Handler(Looper.getMainLooper());
     private Snapshot latest;
-    private boolean securityOnly, showEnded, mapVisible;
+    private boolean securityOnly, showEnded, mapVisible, labelsVisible;
 
     public TfrPlugin(IServiceController serviceController) {
         final PluginContextProvider ctxProvider = serviceController
@@ -113,10 +114,12 @@ public final class TfrPlugin implements IPlugin {
         securityOnly = prefs.getBoolean(PREF_SECURITY_ONLY, false);
         showEnded = prefs.getBoolean(PREF_SHOW_ENDED, false);
         mapVisible = prefs.getBoolean(PREF_MAP_VISIBLE, true);
+        labelsVisible = prefs.getBoolean(PREF_LABELS_VISIBLE, true);
         if (uiService != null)
             uiService.addToolbarItem(toolbarItem);
 
         layer = new MapLayer(mapView, iconUri());
+        layer.setLabelsVisible(labelsVisible);
 
         clickListener = new MapEventDispatcher.MapEventDispatchListener() {
             @Override
@@ -322,6 +325,15 @@ public final class TfrPlugin implements IPlugin {
                 }
 
                 @Override
+                public void setLabelsVisible(boolean on) {
+                    labelsVisible = on;
+                    prefs.edit().putBoolean(PREF_LABELS_VISIBLE, on).apply();
+                    if (layer != null)
+                        layer.setLabelsVisible(on);
+                    redraw();
+                }
+
+                @Override
                 public boolean isCollapsed(Rows.Box box) {
                     return prefs.getBoolean(PREF_COLLAPSED + box.name(),
                             box.collapsedByDefault);
@@ -348,7 +360,7 @@ public final class TfrPlugin implements IPlugin {
                 public LatLon self() {
                     return TfrPlugin.this.self();
                 }
-            }, mapVisible, securityOnly, showEnded);
+            }, mapVisible, labelsVisible, securityOnly, showEnded);
             pane = new PaneBuilder(controller.getView())
                     .setMetaValue(Pane.RELATIVE_LOCATION, Pane.Location.Default)
                     .setMetaValue(Pane.PREFERRED_WIDTH_RATIO, 0.45D)

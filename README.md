@@ -23,7 +23,7 @@ effect near them; pilots should keep using their aviation apps.
   or between scheduled windows; dotted = dropped from the FAA list
   (possibly cancelled)
 - Pane: data age and any feed problem at the top; "Show TFRs on map"
-  switch; boxes for Active now (nearest first), Upcoming (soonest start
+  and "Show labels" switches; boxes for Active now (nearest first), Upcoming (soonest start
   first) and Text-only (collapsed); "Security & VIP only" filter; full
   NOTAM text, every area's altitudes and schedule, and "Show on map"
 - Tap a TFR on the map to open its details
@@ -64,6 +64,12 @@ See docs/DESIGN.md for details and the FAA file format notes.
 _________________________________________________________________
 STATUS
 
+1.0.1 (Nov 2026): labels fixed. 1.0 showed TFR labels only when zoomed
+far out and never up close. Labels now appear once a TFR is about 160 dp
+across on screen and stay at every closer zoom, including the "Show on
+map" zoom; they show through the TFR's own 3D box in tilted views; areas
+nested inside each other (the Washington DC rings) share one label. New
+"Show labels" switch hides the labels (shapes stay) for screenshots.
 1.0 (Nov 2026): first public release. Same code as 0.5.
 0.5 (Nov 2026): new icon (airplane over a red TFR ground ring).
 0.4 (Nov 2026): labels now show at normal zoom (ATAK hides polyline
