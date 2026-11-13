@@ -11,6 +11,7 @@ import com.atakmap.android.tfr.plugin.core.LatLon;
 import com.atakmap.android.tfr.plugin.ui.MapPlan;
 import com.atakmap.coremap.log.Log;
 import com.atakmap.coremap.maps.coords.GeoPoint;
+import com.atakmap.map.AtakMapView;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,10 +68,33 @@ public final class MapLayer {
             });
         }
     };
+    /** Re-checks label sizes as the map moves, at most every 150 ms. */
+    private boolean moveQueued;
+    private final Runnable moveCheck = new Runnable() {
+        @Override
+        public void run() {
+            moveQueued = false;
+            refreshLabels();
+        }
+    };
+    private final AtakMapView.OnMapMovedListener mapMoved = new AtakMapView.OnMapMovedListener() {
+        @Override
+        public void onMapMoved(AtakMapView view, boolean animate) {
+            mapView.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (!moveQueued) {
+                        moveQueued = true;
+                        mapView.postDelayed(moveCheck, 150);
+                    }
+                }
+            });
+        }
+    };
     private final LabelLayer.Visibility visibility = new LabelLayer.Visibility() {
         @Override
         public boolean isShown(String shapeUid) {
-            if (!labelsOn || group == null || !group.getVisible())
+            if (group == null || !group.getVisible())
                 return false;
             MapItem it = group.deepFindUID(shapeUid);
             return it != null && it.getVisible();
@@ -114,6 +138,10 @@ public final class MapLayer {
         if (!labelsChecked) {
             labelsChecked = true;
             labels = LabelLayer.create(mapView);
+            if (labels != null) {
+                labels.setLabelsOn(labelsOn);
+                mapView.addOnMapMovedListener(mapMoved);
+            }
         }
         final double minPixels = labels != null ? labels.minPixels()
                 : MapPlan.LABEL_MIN_DP
@@ -219,6 +247,8 @@ public final class MapLayer {
         if (labelsOn == on)
             return;
         labelsOn = on;
+        if (labels != null)
+            labels.setLabelsOn(on);
         if (labels == null)
             drawn.clear(); // fallback: restyle the shapes on the next apply
         refreshLabels();
@@ -230,6 +260,9 @@ public final class MapLayer {
     }
 
     public void dispose() {
+        mapView.removeOnMapMovedListener(mapMoved);
+        mapView.removeCallbacks(moveCheck);
+        moveQueued = false;
         if (labels != null) {
             labels.dispose();
             labels = null;

@@ -6,7 +6,9 @@ PURPOSE AND CAPABILITIES
 
 TFR-TAK is an ATAK plugin that puts the FAA's Temporary Flight
 Restrictions on the map by itself, straight from the FAA's public TFR
-site (tfr.faa.gov). No server of our own is involved. It is meant for
+site (tfr.faa.gov), and shows national airspace status: nationwide ground
+stops and other Command Center events, and airport ground stops, delay
+programs and closures (nasstatus.faa.gov, www.fly.faa.gov). No server of our own is involved. It is meant for
 people on the ground (incident and disaster response, drone operators,
 prepared citizens) who want to know when an airspace closure goes into
 effect near them; pilots should keep using their aviation apps.
@@ -27,7 +29,13 @@ effect near them; pilots should keep using their aviation apps.
   first) and Text-only (collapsed); "Security & VIP only" filter; full
   NOTAM text, every area's altitudes and schedule, and "Show on map"
 - Tap a TFR on the map to open its details
-- Notification when a newly posted TFR is within 50 NM of you
+- Airspace tab: national Command Center events (e.g. the Nov 13, 2026
+  nationwide ground stop) with the advisory text, and airport events
+  (ground stops, delay programs, closures, delays), nearest first; a
+  national-alert bar on every tab
+- Notification when a newly posted TFR is within 50 NM of you, when a
+  national Command Center event is issued, and when an airport within
+  50 NM gets a ground stop or a full closure
 - TFRs without a graphic in the FAA data (nationwide security notices,
   some long-term restrictions) are listed as text-only, never guessed
 
@@ -64,6 +72,14 @@ See docs/DESIGN.md for details and the FAA file format notes.
 _________________________________________________________________
 STATUS
 
+1.1 (Nov 13, 2026): national airspace status (Airspace tab: nationwide
+ground stops and other Command Center events, airport ground stops, delay
+programs, closures and delays); new look (tabs, the S2 plugins' charcoal
+style); label zoom fix (below). NOTAMs with your own FAA key are planned.
+1.0.2 (not released, in 1.1): a small TFR's label could stay on when zoomed far
+out (ATAK did not apply the label's zoom limit on the test device). The
+plugin now decides itself: a label shows while its TFR spans about 160 dp
+on screen, checked as the map moves (also right in tilted views).
 1.0.1 (Nov 2026): labels fixed. 1.0 showed TFR labels only when zoomed
 far out and never up close. Labels now appear once a TFR is about 160 dp
 across on screen and stay at every closer zoom, including the "Show on
@@ -94,7 +110,8 @@ S2Underground - s2underground@protonmail.com
 _________________________________________________________________
 PORTS REQUIRED
 
-Outbound HTTPS (443) to tfr.faa.gov only.
+Outbound HTTPS (443) to tfr.faa.gov, nasstatus.faa.gov and
+www.fly.faa.gov only.
 
 _________________________________________________________________
 EQUIPMENT REQUIRED

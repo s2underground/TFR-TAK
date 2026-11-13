@@ -4,7 +4,7 @@
 
 #show: userguide.with(
    plugin-name: "TFR-TAK",
-   plugin-version: "1.0.1",
+   plugin-version: "1.1",
    platform: "ATAK",
    platform-version: "5.6.0",
 )
@@ -15,15 +15,16 @@
 #toolbox.side-by-side(columns: (.75fr, 9fr))[
 #image("plugin_icon.png", width: 70%)
 ][
-TFR-TAK puts the FAA's *Temporary Flight Restrictions* (TFRs) on the ATAK map by itself, straight from the FAA's public TFR site, *tfr.faa.gov*. No other server is involved. It is meant for people on the ground (incident and disaster response, drone operators, prepared citizens) who want to know when an airspace closure goes into effect near them. Pilots should keep using their aviation apps.
+TFR-TAK puts the FAA's *Temporary Flight Restrictions* (TFRs) on the ATAK map by itself, straight from the FAA's public TFR site, *tfr.faa.gov*, and shows *national airspace status*: nationwide ground stops and other FAA Command Center events, and airport ground stops, delay programs and closures. No other server is involved. It is meant for people on the ground (incident and disaster response, drone operators, prepared citizens) who want to know when an airspace closure goes into effect near them. Pilots should keep using their aviation apps.
 
 *For awareness only. Not for navigation or flight planning.* The NOTAM text is the authority; the map is a depiction of it.
 ]
 = Getting started
 - The device needs internet the first time. TFR-TAK loads every active TFR (usually 50 to 60 nationwide) within about a minute, then checks for changes every 10 minutes.
-- Tap the *TFR-TAK* toolbar button to open the pane. *Refresh* checks right away.
-- *Show TFRs on map* removes every TFR shape from the map, for screenshots or when TFRs don't matter. The list, the updates and the nearby alerts keep running.
-- *Show labels* hides the TFR labels and keeps the shapes, for clean screenshots.
+- Tap the *TFR-TAK* toolbar button to open the pane. It has three tabs: *Airspace*, *TFRs* and *NOTAMs*. The refresh button (top right) checks right away.
+- A national event (such as a nationwide ground stop) shows as a red or amber bar on every tab; tap it for the details.
+- On the TFRs tab, *TFR shapes on the map* (ON/OFF) removes every TFR shape from the map, for screenshots or when TFRs don't matter. The list, the updates and the nearby alerts keep running.
+- *Labels* (ON/OFF) hides the TFR labels and keeps the shapes, for clean screenshots.
 - TFR-TAK also appears in ATAK's *Overlay Manager*, where the TFRs can be hidden like any other layer and each TFR area is listed.
 - *Security & VIP only* hides every other kind of TFR, on the map and in the list.
 - Tap a TFR on the map, or a row in the list, for its details and the full NOTAM text. *Map* / *Show on map* zooms to it.
@@ -56,9 +57,20 @@ Each TFR's details show the regulation, place, controlling ARTCC, effective and 
 ]
 
 #tak-slide[
+  = Airspace tab
+- *National · FAA Command Center:* nation-wide events in force, from the FAA Command Center's advisories (fly.faa.gov): ground stops of all airports, nationwide airborne holding, diversion recovery and similar. Each card shows since when, the planned end ("may be extended"), the full advisory text and its number. Red: traffic stopped. Amber: other.
+- *Airports:* ground stops (GS), delay programs (GDP), closures (CLSD) and departure/arrival delays reported to the FAA's NAS Status (nasstatus.faa.gov), nearest first. Most closures are partial (for example, closed to non-scheduled transient aircraft without prior permission): those are amber; see the NOTAM in the details. Tap a row for details and *Show on map*.
+- The FAA advisories server often answers empty: TFR-TAK retries and never takes an empty answer as "no event". If no answer arrives, the tab says so.
+- Updated every 5 minutes. Data older than 30 minutes is marked STALE.
+
+= NOTAMs tab
+Critical NOTAMs (GPS interference, ATC and navaid outages, closures, airspace) are planned for the next version. They will need a free FAA key of your own (email NOTAMS\@faa.gov).
+]
+
+#tak-slide[
   = Alerts
 
-When a TFR is newly posted within *50 NM* of your position, TFR-TAK shows an ATAK notification with its type, distance and start time. Alerts are not raised for the TFRs already listed on the first load, and follow the *Security & VIP only* filter. If a new TFR's details can't be downloaded at first, its alert comes as soon as they are.
+When a TFR is newly posted within *50 NM* of your position, TFR-TAK shows an ATAK notification with its type, distance and start time. It also notifies when the FAA Command Center issues a national event (such as a nationwide ground stop), and when an airport within 50 NM gets a ground stop or a full closure. Alerts are not raised for the TFRs already listed on the first load, and follow the *Security & VIP only* filter. If a new TFR's details can't be downloaded at first, its alert comes as soon as they are.
 
 = Without a connection
 
@@ -80,5 +92,5 @@ The last FAA data is kept on the device (`atak/tools/tfrtak/`), so the TFRs come
 
 = Source
 
-FAA Temporary Flight Restrictions, #link("https://tfr.faa.gov")[tfr.faa.gov]: the list of active TFRs and each TFR's published XML. TFR-TAK is not endorsed by the FAA. Contact: S2Underground, s2underground\@protonmail.com.
+FAA Temporary Flight Restrictions, #link("https://tfr.faa.gov")[tfr.faa.gov]: the list of active TFRs and each TFR's published XML. FAA NAS Status (#link("https://nasstatus.faa.gov")[nasstatus.faa.gov]) and the FAA Command Center advisories database (#link("https://www.fly.faa.gov/adv/advADB")[fly.faa.gov]). TFR-TAK is not endorsed by the FAA. Contact: S2Underground, s2underground\@protonmail.com.
 ]

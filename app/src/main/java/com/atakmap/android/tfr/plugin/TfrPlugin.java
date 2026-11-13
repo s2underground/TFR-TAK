@@ -21,10 +21,15 @@ import com.atakmap.android.tfr.plugin.core.LatLon;
 import com.atakmap.android.tfr.plugin.core.Schedule;
 import com.atakmap.android.tfr.plugin.core.Tfr;
 import com.atakmap.android.tfr.plugin.core.TfrArea;
+import com.atakmap.android.tfr.plugin.core.nas.AirportEvent;
+import com.atakmap.android.tfr.plugin.core.nas.National;
 import com.atakmap.android.tfr.plugin.engine.ExecutorScheduler;
+import com.atakmap.android.tfr.plugin.engine.NasMonitor;
+import com.atakmap.android.tfr.plugin.engine.NasSnapshot;
 import com.atakmap.android.tfr.plugin.engine.Snapshot;
 import com.atakmap.android.tfr.plugin.engine.TfrEngine;
 import com.atakmap.android.tfr.plugin.net.HttpFaaClient;
+import com.atakmap.android.tfr.plugin.net.NasClient;
 import com.atakmap.android.tfr.plugin.ui.Format;
 import com.atakmap.android.tfr.plugin.ui.MapPlan;
 import com.atakmap.android.tfr.plugin.ui.Rows;
@@ -36,6 +41,9 @@ import com.atakmap.coremap.log.Log;
 import com.atakmap.coremap.maps.coords.GeoPoint;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -63,6 +71,7 @@ public final class TfrPlugin implements IPlugin {
     static final String PREF_LABELS_VISIBLE = "tfrtak.labelsVisible";
     static final String PREF_COLLAPSED = "tfrtak.collapsed.";
     static final String PREF_ALERT_NM = "tfrtak.alertNm";
+    static final String PREF_TAB = "tfrtak.tab";
     static final int DEFAULT_ALERT_NM = 50;
     private static final int NOTIFY_BASE = 0x7F70;
 
@@ -75,6 +84,12 @@ public final class TfrPlugin implements IPlugin {
     private MapView mapView;
     private MapLayer layer;
     private TfrEngine engine;
+    private NasMonitor nasMonitor;
+    private ExecutorScheduler nasSched;
+    private NasSnapshot latestNas;
+    /** Airport ground stops / closures already alerted (key). */
+    private final Set<String> alertedAirports = new HashSet<>();
+    private boolean nasFirst = true;
     private SharedPreferences prefs;
     private MapEventDispatcher.MapEventDispatchListener clickListener;
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -148,6 +163,109 @@ public final class TfrPlugin implements IPlugin {
             }
         });
         engine.start();
+
+        // National airspace status (1.1): NAS Status + Command Center.
+        final NasClient nc = new NasClient(version());
+        nasSched = new ExecutorScheduler();
+        nasMonitor = new NasMonitor(nasSched, new NasMonitor.Source() {
+            @Override
+            public byte[] airportEvents() throws IOException {
+                return nc.airportEvents();
+            }
+
+            @Override
+            public byte[] advisoryList(int date) throws IOException {
+                return nc.advisoryList(date);
+            }
+
+            @Override
+            public byte[] advisoryText(int date, int number)
+                    throws IOException {
+                return nc.advisoryText(date, number);
+            }
+        });
+        nasMonitor.setListener(new NasMonitor.Listener() {
+            @Override
+            public void onNas(final NasSnapshot s) {
+                main.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        onNasMain(s);
+                    }
+                });
+            }
+        });
+        nasMonitor.start();
+    }
+
+    private void onNasMain(NasSnapshot s) {
+        if (layer == null)
+            return; // stopped
+        latestNas = s;
+        if (controller != null && pane != null && uiService != null
+                && uiService.isPaneVisible(pane))
+            controller.updateNas(s);
+        try {
+            alertNas(s);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "airspace alert failed", e);
+        }
+    }
+
+    /**
+     * Notifies about national Command Center events first seen now (not on
+     * the first load), and airport ground stops / closures within the alert
+     * distance that weren't there before.
+     */
+    private void alertNas(NasSnapshot s) {
+        for (National.Event e : s.newNational) {
+            String title = (e.kind.severe ? "NATIONAL: " : "National: ")
+                    + e.advisory.title;
+            String msg = "FAA Command Center advisory " + e.advisory.number
+                    + (e.text != null && e.text.eventEndMs > 0
+                            ? " · planned to " + new Format(TimeZone.getDefault())
+                                    .zulu(e.text.eventEndMs)
+                            : "");
+            notify(NOTIFY_BASE + 500 + e.kind.ordinal(), e.kind.severe, title,
+                    msg);
+        }
+        int nm = prefs.getInt(PREF_ALERT_NM, DEFAULT_ALERT_NM);
+        LatLon self = self();
+        if (s.airportsOkMs <= 0)
+            return; // no airport data yet: nothing to compare against
+        boolean first = nasFirst;
+        nasFirst = false;
+        Set<String> now = new HashSet<>();
+        for (AirportEvent e : s.airports) {
+            if (e.type != AirportEvent.Type.GROUND_STOP
+                    && !(e.type == AirportEvent.Type.CLOSED && !e.partial))
+                continue;
+            now.add(e.key());
+            if (first || alertedAirports.contains(e.key()) || self == null
+                    || nm <= 0 || Double.isNaN(e.lat))
+                continue;
+            double d = Geo.distance(self, new LatLon(e.lat, e.lon));
+            if (d > nm * Geo.METERS_PER_NM)
+                continue;
+            notify(NOTIFY_BASE + 600 + Math.abs(e.key().hashCode() % 300), true,
+                    e.type.label + ": " + e.airport + ", "
+                            + Format.distance(d) + " from you",
+                    e.what + (e.reason.isEmpty() ? "" : " · " + e.reason));
+        }
+        alertedAirports.retainAll(now);
+        alertedAirports.addAll(now);
+    }
+
+    private void notify(int id, boolean red, String title, String msg) {
+        try {
+            NotificationUtil.getInstance().postNotification(id,
+                    red ? NotificationUtil.GeneralIcon.STATUS_RED.getID()
+                            : NotificationUtil.GeneralIcon.STATUS_YELLOW.getID(),
+                    red ? NotificationUtil.RED : NotificationUtil.YELLOW, title,
+                    msg, msg);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "notification failed", e);
+        }
     }
 
     /**
@@ -189,6 +307,15 @@ public final class TfrPlugin implements IPlugin {
             engine.setListener(null);
             engine.stop();
             engine = null;
+        }
+        if (nasMonitor != null) {
+            nasMonitor.setListener(null);
+            nasMonitor.stop();
+            nasMonitor = null;
+        }
+        if (nasSched != null) {
+            nasSched.shutdown();
+            nasSched = null;
         }
         if (uiService != null) {
             if (pane != null && uiService.isPaneVisible(pane))
@@ -308,6 +435,21 @@ public final class TfrPlugin implements IPlugin {
                 public void refresh() {
                     if (engine != null)
                         engine.refreshNow();
+                    if (nasMonitor != null)
+                        nasMonitor.refreshNow();
+                }
+
+                @Override
+                public void panTo(double lat, double lon) {
+                    if (mapView != null)
+                        com.atakmap.map.CameraController.Programmatic.panTo(
+                                mapView.getRenderer3(), new GeoPoint(lat, lon),
+                                true);
+                }
+
+                @Override
+                public void setTab(int tab) {
+                    prefs.edit().putInt(PREF_TAB, tab).apply();
                 }
 
                 @Override
@@ -360,7 +502,8 @@ public final class TfrPlugin implements IPlugin {
                 public LatLon self() {
                     return TfrPlugin.this.self();
                 }
-            }, mapVisible, labelsVisible, securityOnly, showEnded);
+            }, mapVisible, labelsVisible, securityOnly, showEnded,
+                    prefs.getInt(PREF_TAB, TfrPane.TAB_AIRSPACE));
             pane = new PaneBuilder(controller.getView())
                     .setMetaValue(Pane.RELATIVE_LOCATION, Pane.Location.Default)
                     .setMetaValue(Pane.PREFERRED_WIDTH_RATIO, 0.45D)
@@ -369,8 +512,10 @@ public final class TfrPlugin implements IPlugin {
         }
         if (latest != null)
             controller.update(latest);
+        if (latestNas != null)
+            controller.updateNas(latestNas);
         if (!uiService.isPaneVisible(pane)) {
-            controller.showList();
+            controller.back();
             uiService.showPane(pane, null);
         }
         if (engine != null)

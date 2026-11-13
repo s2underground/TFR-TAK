@@ -111,14 +111,60 @@ the polylines' `centerPointLabel`:
   fall inside each other (the DC 30 NM ring and Area B) share one label at
   the largest area's bounding-box center; one line if altitudes and state
   match, else a line per area.
-- **Zoom.** Shown from the coarsest ATAK tile level at which the area
-  spans `LABEL_MIN_DP` (160 dp x screen density) and at every closer zoom.
-  ATAK compares whole levels, floor(log2(156543.034 / m per px)); the level
-  is rounded up so the label never appears before the area spans 160 dp
-  (it appears between 160 and 320 dp; "Show on map" fits the whole view).
+- **Zoom (1.0.2).** Shown while the area's bounding-box diagonal spans
+  `LABEL_MIN_DP` (160 dp x screen density) on screen: the plugin projects
+  the two corners (`MapView.forward`) on every map move (debounced 150 ms)
+  and calls `setVisible`. ATAK's per-label level of detail is left open
+  (0..MAX): on a test device it was not applied (1.0.1).
 - Shown while any of its shapes is shown (map switch, Overlay Manager)
   and the pane's "Show labels" switch (pref `tfrtak.labelsVisible`) is on;
   not hit-testable, so a tap reaches the shape. Removed on stop.
 - Fallback if the label manager can't be reached: the polylines'
   `centerPointLabel` with the same level (`minLabelRenderResolution` and
   `minRenderScale` = coarse limit, `maxLabelRenderResolution` = 0).
+
+
+## National airspace status (1.1)
+
+Sources (public, no key), polled every 5 min on their own thread
+(`engine/NasMonitor`, retry 2 min on failure):
+
+- `https://nasstatus.faa.gov/api/airport-events` (JSON; the data behind
+  the NAS Status page): per airport `groundStop`, `groundDelay`,
+  `airportClosure`, `freeForm` (closure NOTAMs), `departureDelay`,
+  `arrivalDelay`, with `latitude`/`longitude`. → `core/nas/AirportEvent`.
+- `https://www.fly.faa.gov/adv/adv_list?…&date=YYYY-MM-DD` (HTML table:
+  number, control element, date, title, send time) for today and
+  yesterday (UTC), and `adv_otherdis?adv_date=MMDDYYYY&advn=N` for the
+  text of national advisories. → `core/nas/Advisory`.
+- **National events are only in the advisories.** On Nov 13, 2026 the
+  nationwide ground stop (ADVZY 111, reissued as 120) never appeared as a
+  ground stop in the airport feed.
+- **The advisories server answers "no advisories" / "NO Advisory." to
+  most requests at random** (about 4 in 5 on Nov 13). A list is retried
+  up to 8 times (1.2 s apart) and a text up to 6; an empty answer is
+  "unknown", never "none"; a day's list only grows.
+- National = control element DCC or ALL, and a title saying national /
+  nationwide / nation wide / all airports / ATC zero. Kinds: ground stop,
+  ATC zero (red); airborne holding, diversion recovery, other (amber).
+  Per kind the newest advisory decides; a cancellation (CNX/CANCEL) ends
+  it (shown as cancelled for 2 h); otherwise in force until the EVENT
+  TIME end, or 12 h after sending if the text isn't in yet; ignored after
+  30 h. (`core/nas/National`.)
+- Closures with exceptions (TO …, EXC, PPR) are "partial": amber, not
+  alerted.
+- Alerts: a national event first seen after the first load; an airport
+  ground stop or full closure within the alert distance (50 NM) first
+  seen after the first load.
+- Not cached on the device (yet): after a restart without signal the
+  Airspace tab says no answer has been received.
+
+## Pane (1.1)
+
+Tabs Airspace · TFRs · NOTAMs (option B of the 1.1 mock-ups), the S2
+plugins' charcoal palette (WX-TAK "C"): background #111316, panels
+#16191D with #2B3138 borders, text #E6E9ED, stop #D9615A, caution
+#D9A441, go #5FB37A; selected = inverted. A national-alert bar on the
+TFRs and NOTAMs tabs. Every click and render is guarded (a display error
+is shown in the pane, never thrown into ATAK). The open tab is remembered
+(`tfrtak.tab`).

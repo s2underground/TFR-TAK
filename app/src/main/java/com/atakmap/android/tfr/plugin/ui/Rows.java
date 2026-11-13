@@ -53,7 +53,8 @@ public final class Rows {
         /** Notes in plain words (no graphic, possibly cancelled, errors). */
         public final List<String> notes;
         final int rank;
-        final double distanceM;
+        /** Metres from you (0 inside); NaN if unknown. */
+        public final double distanceM;
         /** Next state change (start of upcoming TFRs); -1 if none. */
         final long nextMs;
 

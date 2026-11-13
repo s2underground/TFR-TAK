@@ -58,6 +58,8 @@ public final class MapPlan {
         public final double extentM;
         /** Center of the bounding box, where ATAK would put the label. */
         public final LatLon center;
+        /** Bounding-box corners (south-west, north-east). */
+        public final LatLon sw, ne;
 
         Shape(String uid, String tfrId, String areaName, List<LatLon> outline,
                 int stroke, int fill, Line line, double heightM, String head,
@@ -77,6 +79,9 @@ public final class MapPlan {
             this.title = title;
             this.extentM = Boundary.extent(outline);
             this.center = center(outline);
+            LatLon[] box = box(outline);
+            this.sw = box[0];
+            this.ne = box[1];
         }
 
         /** Changes when anything drawn changes (every point counts). */
@@ -107,14 +112,23 @@ public final class MapPlan {
         public final double extentM;
         /** The shapes this label names; it is shown while any of them is. */
         public final List<String> shapeUids;
+        /**
+         * Bounding box of the area it names (the largest of a group). The
+         * label is shown while the box's diagonal spans at least the
+         * minimum on screen, measured by projecting these two corners
+         * (atak/LabelLayer), so it is right in tilted views too.
+         */
+        public final LatLon sw, ne;
 
         Label(String uid, String text, LatLon anchor, double extentM,
-                List<String> shapeUids) {
+                List<String> shapeUids, LatLon sw, LatLon ne) {
             this.uid = uid;
             this.text = text;
             this.anchor = anchor;
             this.extentM = extentM;
             this.shapeUids = Collections.unmodifiableList(shapeUids);
+            this.sw = sw;
+            this.ne = ne;
         }
 
         /**
@@ -146,6 +160,26 @@ public final class MapPlan {
     /** Resolution (m/pixel) of a tile level, as ATAK computes it. */
     public static double levelResolution(int level) {
         return LEVEL0_RES / Math.pow(2, level);
+    }
+
+    /**
+     * Whether a label is shown for an area whose bounding-box diagonal spans
+     * {@code screenPx} on screen. NaN (corner behind the camera or not
+     * projectable) = not shown.
+     */
+    public static boolean bigEnough(double screenPx, double minPixels) {
+        return screenPx >= minPixels;
+    }
+
+    static LatLon[] box(List<LatLon> ring) {
+        double lat0 = 90, lat1 = -90, lon0 = 180, lon1 = -180;
+        for (LatLon p : ring) {
+            lat0 = Math.min(lat0, p.lat);
+            lat1 = Math.max(lat1, p.lat);
+            lon0 = Math.min(lon0, p.lon);
+            lon1 = Math.max(lon1, p.lon);
+        }
+        return new LatLon[] { new LatLon(lat0, lon0), new LatLon(lat1, lon1) };
     }
 
     static LatLon center(List<LatLon> ring) {
@@ -259,7 +293,7 @@ public final class MapPlan {
                 text = b.toString();
             }
             out.add(new Label(big.uid + "-label", text, big.center,
-                    big.extentM, uids));
+                    big.extentM, uids, big.sw, big.ne));
         }
         return Collections.unmodifiableList(out);
     }

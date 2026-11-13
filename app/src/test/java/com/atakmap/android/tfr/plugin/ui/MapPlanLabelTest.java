@@ -80,4 +80,20 @@ public class MapPlanLabelTest {
             }
         }
     }
+
+    @Test
+    public void labelCarriesItsAreasBoxAndShowsOnlyWhenBigOnScreen() {
+        List<MapPlan.Shape> plan = new ArrayList<>();
+        plan.add(shape("4/4", 1, "", square(28.4, -81.6, 0.05),
+                "SFC–3,000 ft AGL", "ACTIVE"));
+        MapPlan.Label l = MapPlan.labels(plan).get(0);
+        assertEquals(28.35, l.sw.lat, 1e-9);
+        assertEquals(-81.65, l.sw.lon, 1e-9);
+        assertEquals(28.45, l.ne.lat, 1e-9);
+        assertEquals(-81.55, l.ne.lon, 1e-9);
+        assertTrue(MapPlan.bigEnough(320, 320));
+        assertTrue(!MapPlan.bigEnough(319.9, 320));
+        // A corner that can't be projected (behind the camera): hidden.
+        assertTrue(!MapPlan.bigEnough(Double.NaN, 320));
+    }
 }

@@ -125,6 +125,52 @@ Failed, fixed in 0.4:
    `PresentationTest.labelZoomIsExactAndFitsShowOnMap`,
    `nestedDcRingsShareOneLabel`, `ui/MapPlanLabelTest`.
 
+## Field report after 1.0.1 (Nov 13, 2026) — fixed in 1.0.2
+
+A 3 NM Disney World TFR (6/6924) kept its label at 26 NM and 280 NM
+scale-bar zooms, while the "Show labels" switch (show/hide) worked. So
+the label manager honoured `setVisible` but not the per-label level of
+detail on that device. 1.0.2 sets the level of detail wide open and shows
+or hides each label itself: on every map move (at most every 150 ms) it
+projects the area's bounding-box corners to the screen and shows the label
+while the diagonal spans at least 160 dp. This also behaves in tilted
+views (far areas look smaller). Hints set explicitly (ATAK defaults +
+x-ray): `getHints()` returns 0 for a label still queued.
+
+## 1.1 audit (Nov 13, 2026): national airspace status and new pane
+
+Scope: `core/nas` (Advisory, National, AirportEvent), `net/NasClient`,
+`engine/NasMonitor`, `ui/NasRows`, the rebuilt `ui/TfrPane`, plugin
+wiring and alerts. Checked against data captured during the Nov 13, 2026
+nationwide ground stop (fixtures/nas/2026-11-13) and a live run (the
+monitor found ADVZY 120 with its text, 2 Canadian airport ground stops
+and 6 closures in 40 s).
+
+| # | Sev | Finding | Fix |
+|---|---|---|---|
+| N1 | High | The national ground stop is not in the airport feed at all (only "NATIONAL STOP" reasons on delays). | National events read from the Command Center advisories. |
+| N2 | High | The advisories server answers "no advisories" / "NO Advisory." to most requests at random (≈4 in 5). Taken at face value, the plugin would show "no national event" during one. | Retries (list 8, text 6); empty = unknown, never none; a day's list only grows; "no answer" shown as a problem and STALE. Tests: `NasMonitorTest`. |
+| N3 | Med | A manual refresh started a second poll chain (double polling). | Poll generation: only the newest chain runs; refresh ignored within 30 s. Test. |
+| N4 | Med | Most "closures" are partial (non-scheduled transient GA, PPR); red + alerts would cry wolf. | `partial` closures amber, not alerted. Test. |
+| N5 | Low | If the first airport fetch failed, the next good one would alert on existing ground stops. | Airport alerts start from the first good fetch. |
+| N6 | Low | Advisory maps would grow forever. | Only today's and yesterday's (UTC) kept. |
+| N7 | Low | A literal BOM in source (lint error). | Escaped. |
+
+Static analysis (SpotBugs 4.8.6 + FindSecBugs 1.13) on 1.1: SSRF on
+`NasClient` (URLs are fixed strings + integers, host allowlist before
+connecting and on the response, no redirects; same as `HttpFaaClient`),
+plus style notes (inner classes, float compare in a sort). Nothing else
+new. Fortify is expected to report the SSRF and the existing XML items.
+
+Not covered by automated tests: the pane on a device (tabs, bar, cards,
+toggles), notifications, map pan from an airport.
+
+Known limits (1.1): airspace status is not cached on the device (after a
+restart without signal the tab says nothing was received); national
+classification is by title keywords from the Command Center's own titles
+(new wording could be missed: then it still appears nowhere wrong, just
+not as national); event ends are the FAA's planned times.
+
 ## Known limits (by design, stated in the manual)
 
 - Awareness only, not navigation. Not every restriction is a TFR (no
